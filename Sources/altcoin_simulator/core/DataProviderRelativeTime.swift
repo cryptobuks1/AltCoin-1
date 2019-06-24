@@ -9,8 +9,8 @@ import Foundation
 
 protocol RelativeDataProvider : TimeProvider
 {
-	func getCurrencies () -> [Currency]?
-	func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) -> CurrencyData?
+	func getCurrencies () throws -> [Currency]?
+	func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 }
 
 class RelativeDataProviderConcrete : RelativeDataProvider
@@ -30,12 +30,12 @@ class RelativeDataProviderConcrete : RelativeDataProvider
 		return timeProvider.now
 	}
 
-	func getCurrencies () -> [Currency]?
+	func getCurrencies () throws -> [Currency]?
 	{
-		return dataProvider.getCurrencies()
+		return try dataProvider.getCurrencies()
 	}
 	
-	func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) -> CurrencyData?
+	func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		let now = timeProvider.now
 		
@@ -43,7 +43,7 @@ class RelativeDataProviderConcrete : RelativeDataProvider
 		
 		RelativeDataProviderConcrete.log.print("getCurrencyData using timeRange \(TimeEvents.toString(range))")
 
-		return dataProvider.getCurrencyData(for: currency, key: key, in: range, with: resolution)
+		return try dataProvider.getCurrencyData(for: currency, key: key, in: range, with: resolution)
 	}
 
 }

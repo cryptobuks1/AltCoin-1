@@ -29,6 +29,7 @@ class StandardTimeEquations
 class StandardTimeRanges
 {
 	static let relativeNow : Time = 0
+	static let oneDay : TimeRange = -TimeQuantities.Day ... relativeNow
 	static let oneWeek : TimeRange = -TimeQuantities.Week ... relativeNow
 	static let fourWeeks : TimeRange = (4.0 * -TimeQuantities.Week) ... relativeNow
 }
@@ -67,5 +68,7 @@ class TimeEvents
 	static let firstBubbleStart = toDate("2017-03-01T00:00:00+0000").timeIntervalSinceReferenceDate
 	static let firstBubbleCrash = toDate("2017-12-16T00:00:00+0000").timeIntervalSinceReferenceDate
 	static let secondBubbleStart = toDate("2019-02-01T00:00:00+0000").timeIntervalSinceReferenceDate
+
 	static let now = Date().timeIntervalSinceReferenceDate
+	static let safeNow = now - TimeQuantities.Hour
 }

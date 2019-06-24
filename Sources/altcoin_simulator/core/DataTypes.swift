@@ -28,8 +28,8 @@ struct Currency
 
 struct HistoricalValue : Hashable
 {
-	let time: Double
-	let value: Double
+	let time: Time
+	let value: Real
 }
 
 struct HistoricalValues

@@ -19,48 +19,48 @@ class DataProviderCaching : DataProvider
 		self.cache = cache
 	}
 	
-	func getCurrencies () -> [Currency]?
+	func getCurrencies () throws -> [Currency]?
 	{
-		if let data = cache.getCurrencies()
+		if let data = try cache.getCurrencies()
 		{
 			return data
 		}
 		
-		if let data = source.getCurrencies()
+		if let data = try source.getCurrencies()
 		{
-			cache.putCurrencies(data)
+			try cache.putCurrencies(data)
 			return data
 		}
 		
 		return nil
 	}
 
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
+	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
-		if let data = cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
+		if let data = try cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
 		{
 			return data
 		}
 		
-		if let datas = source.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
+		if let datas = try source.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
 		{
-			cache.putCurrencyDatas(datas, for: currency, in: range, with: resolution)
-			return cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
+			try cache.putCurrencyDatas(datas, for: currency, in: range, with: resolution)
+			return try cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
 		}
 		
 		return nil
 	}
 	
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
+	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-		if let datas = cache.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
+		if let datas = try cache.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
 		{
 			return datas
 		}
 		
-		if let datas = source.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
+		if let datas = try source.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
 		{
-			cache.putCurrencyDatas(datas, for: currency, in: range, with: resolution)
+			try cache.putCurrencyDatas(datas, for: currency, in: range, with: resolution)
 			return datas
 		}
 		

@@ -12,7 +12,7 @@ func cacheAllCurrencies () throws
 	let usecond : Double = 1000000
 	let dataProvider = try DataProviderCaching (source: DataProviderWeb(), cache: DataProviderDiskJSON())
 
-	if let currencies = dataProvider.getCurrencies()
+	if let currencies = try dataProvider.getCurrencies()
 	{
 		var sleepSeconds : Double = 15
 		var requestSeconds = 0.5
@@ -26,7 +26,7 @@ func cacheAllCurrencies () throws
 			
 			repeat
 			{
-				currencyData = dataProvider.getCurrencyData(for: currency, key: S.priceUSD, in: range, with: Resolution.hour)
+				currencyData = try dataProvider.getCurrencyData(for: currency, key: S.priceUSD, in: range, with: Resolution.hour)
 				
 				if currencyData == nil
 				{

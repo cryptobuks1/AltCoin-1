@@ -57,7 +57,7 @@ class DataProviderWeb : DataProvider
 //			let selected = ["bitcoin", "litecoin", "chainlink"]
 //			currencies = currencies.filter { return selected.contains($0.id) }
 			currencies.sort { return $0.rank < $1.rank }
-			currencies = currencies.filter { return $0.rank < 50 }
+			currencies = currencies.filter { return $0.rank < 4 }
 			
 			log.print("read web for currencies")
 			return currencies
@@ -83,7 +83,10 @@ class DataProviderWeb : DataProvider
 				}
 			}
 			
-			return HistoricalValues(samples: historicalValues)
+			let values = HistoricalValues(samples: historicalValues)
+			log.print("parsed historical values have median time span \(values.medianTimeBetweenSamples)")
+
+			return values
 		}
 		
 		return nil
@@ -91,9 +94,8 @@ class DataProviderWeb : DataProvider
 
 	func getCurrencyDatas_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-		let roundedRange = range.round(6.0 * TimeQuantities.Week)
-		print("getCurrencyDatas_ range \(TimeEvents.toString(range)) -> roundedRange " +
-			"\(TimeEvents.toString(roundedRange))")
+		let roundedRange = range.round(1.0 * TimeQuantities.Week).clamped(to: 0 ... TimeEvents.safeNow )
+		log.print("getCurrencyDatas_ range \(TimeEvents.toString(range)) -> roundedRange \(TimeEvents.toString(roundedRange))")
 		
 		let currencyDataURLString = S_.currencyDataURLStringTemplate
 			.replacingOccurrences(of: S_.templateId, with: currency.id)
@@ -182,8 +184,11 @@ class DataProviderWeb : DataProvider
 					sleepSeconds *= 1.1
 				}
 				
-				requestDelaySeconds *= 1.1
-				print("increased sleepSeconds to \(sleepSeconds) requestDelaySeconds \(requestDelaySeconds)")
+				if !alreadySlept
+				{
+					requestDelaySeconds *= 1.02
+					print("increased sleepSeconds to \(sleepSeconds) requestDelaySeconds \(requestDelaySeconds)")
+				}
 				
 				alreadySlept = true
 			}

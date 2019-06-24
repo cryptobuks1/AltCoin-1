@@ -16,18 +16,18 @@ class TradeGeneratorVelocitiesMaximum : TradeGeneratorWithDataProviderAndTimeRan
 		super.init(relativeDataProvider: relativeDataProvider, timeRange: timeRange, resolution: resolution)
 	}
 	
-	override func generateTrades() -> [Trade]?
+	override func generateTrades() throws -> [Trade]?
 	{
 		let p = relativeDataProvider
-		guard let currencies = p.getCurrencies() else { return nil }
+		guard let currencies = try p.getCurrencies() else { return nil }
 		
 		var trades = [Trade]()
 		
 		typealias IdToVelocity = (id: CurrencyId, velocity: Real)
 		
-		var idToVelocity = currencies.enumerated().map { (i,c) -> IdToVelocity in
+		var idToVelocity = try currencies.enumerated().map { (i,c) -> IdToVelocity in
 			//log.print("\(i)/\(currencies.count)")
-			return (id: c.id, velocity: p.getCurrencyData(for: c, key: S.priceUSD, in: timeRange, with: resolution)?.values.velocity ?? -Real.greatestFiniteMagnitude)
+			return (id: c.id, velocity: try p.getCurrencyData(for: c, key: S.priceUSD, in: timeRange, with: resolution)?.values.velocity ?? -Real.greatestFiniteMagnitude)
 		}
 		
 		idToVelocity.sort {

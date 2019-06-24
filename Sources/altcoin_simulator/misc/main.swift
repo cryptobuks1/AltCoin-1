@@ -19,7 +19,7 @@ let timeProvider = TimeProviderStep(now: TimeEvents.firstBubbleStart, stepEquati
 
 let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)
 
-let timeRange = StandardTimeRanges.fourWeeks
+let timeRange = StandardTimeRanges.oneDay
 let resolution = Resolution.day
 let tradeGenerator = TradeGeneratorVelocitiesMaximum(
 	relativeDataProvider: relativeDataProvider,
@@ -31,4 +31,4 @@ let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(t
 
 let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
-runner.run(until: TimeEvents.firstBubbleCrash)
+try runner.run(until: TimeEvents.safeNow)

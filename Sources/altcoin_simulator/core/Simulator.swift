@@ -19,9 +19,9 @@ class Simulator
 		self.tradeBook = tradeBook
 	}
 	
-	func execute ()
+	func execute () throws
 	{
-		if let trades = tradeGenerator.generateTrades()
+		if let trades = try tradeGenerator.generateTrades()
 		{
 			tradeBook.trades.append(contentsOf: trades)
 		}
@@ -41,12 +41,12 @@ class SimulatorRunner
 		self.timeProvider = timeProvider
 	}
 	
-	func run (until: Time)
+	func run (until: Time) throws
 	{
 		while timeProvider.now < until
 		{
 			log.print("stepping simulation at time \(TimeEvents.toString(timeProvider.now))")
-			simulator.execute()
+			try simulator.execute()
 			timeProvider.step()
 		}
 	}

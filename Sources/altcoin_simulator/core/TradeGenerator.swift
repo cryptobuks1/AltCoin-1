@@ -8,7 +8,7 @@
 import Foundation
 
 protocol TradeGenerator {
-	func generateTrades () -> [Trade]?
+	func generateTrades () throws -> [Trade]?
 }
 
 class TradeGeneratorWithDataProvider : TradeGenerator
@@ -20,7 +20,7 @@ class TradeGeneratorWithDataProvider : TradeGenerator
 		self.relativeDataProvider = relativeDataProvider
 	}
 	
-	func generateTrades () -> [Trade]?
+	func generateTrades () throws -> [Trade]?
 	{
 		return nil
 	}
