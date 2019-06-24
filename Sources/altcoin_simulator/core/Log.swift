@@ -7,6 +7,24 @@
 
 import Foundation
 
+class LogAlloc
+{
+	static func destruct (_ out : Any)
+	{
+#if DEBUG
+		Swift.print("destruct: ", out);
+#endif
+	}
+
+	static func construct (_ out : Any)
+	{
+#if DEBUG
+		Swift.print("construct: ", out);
+#endif
+	}
+}
+
+
 class Log
 {
 	let title : String

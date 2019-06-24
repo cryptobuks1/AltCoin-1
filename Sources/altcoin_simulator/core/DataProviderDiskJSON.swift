@@ -58,13 +58,14 @@ class DataProviderDiskJSON : DataCache
 		{
 			do
 			{
-				let data = try Data(contentsOf: fileURL)
-				let decoder = JSONDecoder()
-				let decoded = try decoder.decode(type, from: data)
-				
-				log.print("read cache for \(fileName)")
-				
-				return decoded
+				return try autoreleasepool { () -> T in
+					let data = try Data(contentsOf: fileURL)
+					let decoder = JSONDecoder()
+					let decoded = try decoder.decode(type, from: data)
+					
+					log.print("read cache for \(fileName)")
+					return decoded
+				}
 			}
 			catch
 			{
@@ -81,11 +82,13 @@ class DataProviderDiskJSON : DataCache
 		{
 			do
 			{
-				let encoder = JSONEncoder()
-				if let encoded = try? encoder.encode(data)
-				{
-					try encoded.write(to: fileURL, options: .atomic)
-					log.print("wrote cache for \(fileName)")
+				try autoreleasepool {
+					let encoder = JSONEncoder()
+					if let encoded = try? encoder.encode(data)
+					{
+						try encoded.write(to: fileURL, options: .atomic)
+						log.print("wrote cache for \(fileName)")
+					}
 				}
 			}
 			catch

@@ -14,6 +14,8 @@ class DataProviderWeb : DataProvider
 
 	class S_ {
 		static let
+			folderName = "altcoin-simulator/http",
+
 			currenciesURLString = "https://s2.coinmarketcap.com/generated/search/quick_search.json",
 			currencyDataURLStringTemplate = "https://graphs2.coinmarketcap.com/currencies/{id}/{startTime}/{endTime}/",
 			templateId = "{id}",
@@ -30,6 +32,36 @@ class DataProviderWeb : DataProvider
 			market_cap_by_available_supply = "market_cap_by_available_supply"
 	}
 
+	init ()
+	{
+		if let dataFolder = getDataFolderUrl()
+		{
+			try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
+		}
+	}
+	
+	func getDataFolderUrl () -> URL?
+	{
+		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+		{
+			documentsURL.appendPathComponent(S_.folderName)
+			return documentsURL
+		}
+		
+		return nil
+	}
+	
+	func getFileUrlFor(_ fileName: String) -> URL?
+	{
+		if var dataFolderUrl = getDataFolderUrl()
+		{
+			dataFolderUrl.appendPathComponent(fileName)
+			return dataFolderUrl
+		}
+		
+		return nil
+	}
+	
 	func getCurrencies () -> [Currency]?
 	{
 		let currenciesURL = URL(string: S_.currenciesURLString)!
@@ -92,6 +124,30 @@ class DataProviderWeb : DataProvider
 		return nil
 	}
 
+	func convertUrlToFileName (_ url : URL) -> String
+	{
+		let s = url.absoluteString
+		return s.replacingOccurrences(of: ":", with: "=").replacingOccurrences(of: "/", with: "_")
+	}
+	
+	func getCacheFor (url: URL) -> Any?
+	{
+		if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+		{
+			return try? JSONSerialization.jsonObject(with: Data(contentsOf: fileUrl), options: [])
+		}
+		return nil
+	}
+	
+	func setCacheFor (url: URL, json: Any?) throws
+	{
+		if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+		{
+			let data = try JSONSerialization.data(withJSONObject: json, options: [])
+			try data.write(to: fileUrl)
+		}
+	}
+
 	func getCurrencyDatas_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
 		let roundedRange = range.round(1.0 * TimeQuantities.Week).clamped(to: 0 ... TimeEvents.safeNow )
@@ -104,9 +160,21 @@ class DataProviderWeb : DataProvider
 		
 		print(currencyDataURLString)
 		
+		var json : Any?
+		
 		let currencyDataURL = URL(string: currencyDataURLString)!
-		let (json, error) = JSONURLTask.shared.dataTaskSync(with: currencyDataURL)
-		guard error == nil else { throw error! }
+		if let json_ = getCacheFor(url: currencyDataURL)
+		{
+			json = json_
+		}
+		else
+		{
+			let (json_, error) = JSONURLTask.shared.dataTaskSync(with: currencyDataURL)
+			guard error == nil else { throw error! }
+			
+			try setCacheFor (url: currencyDataURL, json: json_)
+			json = json_
+		}
 		
 		var datas = [CurrencyData]()
 		let cacheTime = Date().timeIntervalSinceReferenceDate
