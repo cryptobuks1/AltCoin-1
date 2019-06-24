@@ -10,15 +10,6 @@ import Foundation
 
 class JSONURLTask
 {
-	init()
-	{
-		LogAlloc.construct(self)
-	}
-	
-	deinit {
-    	LogAlloc.destruct(self)
-	}
-
 	enum URLResponseError : Error {
 		case statusCodeNot200
 	}
