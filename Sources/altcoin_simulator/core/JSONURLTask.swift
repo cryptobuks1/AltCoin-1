@@ -55,19 +55,23 @@ class WebCache
 	
 	func getCacheFor (url: URL) -> Any?
 	{
-		if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
-		{
-			return try? JSONSerialization.jsonObject(with: Data(contentsOf: fileUrl), options: [])
+		return autoreleasepool {
+			if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+			{
+				return try? JSONSerialization.jsonObject(with: Data(contentsOf: fileUrl), options: [])
+			}
+			return nil
 		}
-		return nil
 	}
 	
 	func setCacheFor (url: URL, json: Any?) throws
 	{
-		if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
-		{
-			let data = try JSONSerialization.data(withJSONObject: json, options: [])
-			try data.write(to: fileUrl, options: .atomic)
+		try autoreleasepool {
+			if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+			{
+				let data = try JSONSerialization.data(withJSONObject: json, options: [])
+				try data.write(to: fileUrl, options: .atomic)
+			}
 		}
 	}
 }
@@ -222,7 +226,7 @@ class JSONURLTask
 	}
 
 	var sleepSeconds = 30.0
-	var requestDelaySeconds = 0.1
+	var requestDelaySeconds = 0.0
 	var lastRequestSecond : TimeInterval = 0
 	
 	func sleep(_ delay : Double)

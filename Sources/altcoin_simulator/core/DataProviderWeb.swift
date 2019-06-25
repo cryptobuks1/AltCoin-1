@@ -11,6 +11,7 @@ import Foundation
 class DataProviderWeb : DataProvider
 {
 	let log = Log(clazz: DataProviderWeb.self)
+	let logDetail = LogNull(clazz: DataProviderWeb.self)
 
 	class S_ {
 		static let
@@ -115,7 +116,7 @@ class DataProviderWeb : DataProvider
 			}
 			
 			let values = HistoricalValues(samples: historicalValues)
-			log.print("parsed historical values have median time span \(values.medianTimeBetweenSamples)")
+			logDetail.print("parsed historical values have median time span \(values.medianTimeBetweenSamples)")
 
 			return values
 		}
@@ -126,56 +127,58 @@ class DataProviderWeb : DataProvider
 
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-		if !currency.timeRange.extends(range)
-		{
-			return []
-		}
-	
-		let roundedRange = range.round(1.0 * TimeQuantities.Week).clamped(to: 0 ... TimeEvents.safeNow )
-		log.print("getCurrencyDatas_ range \(TimeEvents.toString(range)) -> roundedRange \(TimeEvents.toString(roundedRange))")
-		
-		let currencyDataURLString = S_.currencyDataURLStringTemplate
-			.replacingOccurrences(of: S_.templateId, with: currency.id)
-			.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
-			.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
-		
-		let currencyDataURL = URL(string: currencyDataURLString)!
-		let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
-		guard error == nil else { throw error! }
-		
-		var datas = [CurrencyData]()
-		let cacheTime = Date().timeIntervalSinceReferenceDate
-		
-		let parseTos = [
-			(S.markeyCapByAvailableSupply, S_.market_cap_by_available_supply),
-			(S.priceBTC, S_.price_btc),
-			(S.priceUSD, S_.price_usd),
-			(S.volumeUSD, S_.volume_usd)
-		]
-		
-		if let json = json
-		{
-			for parseTo in parseTos
+		return try autoreleasepool {
+			if !currency.timeRange.extends(range)
 			{
-				if let values = parseHistoricalValues(json, parseTo.1)
-				{
-					datas.append(
-						CurrencyData(
-							key: parseTo.0,
-							ranges: TimeRanges(ranges:[roundedRange]),
-							values: values,
-							cacheTime: cacheTime,
-							wasCached: wasCached
-						)
-					)
-				}
+				return []
 			}
-
-			log.print("read web for \(currency.id)")
-			return datas;
-		}
 		
-		return nil
+			let roundedRange = range.round(1.0 * TimeQuantities.Week).clamped(to: 0 ... TimeEvents.safeNow )
+			log.print("getCurrencyDatas_ range \(TimeEvents.toString(range)) -> roundedRange \(TimeEvents.toString(roundedRange))")
+			
+			let currencyDataURLString = S_.currencyDataURLStringTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
+				.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
+			
+			let currencyDataURL = URL(string: currencyDataURLString)!
+			let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
+			guard error == nil else { throw error! }
+			
+			var datas = [CurrencyData]()
+			let cacheTime = Date().timeIntervalSinceReferenceDate
+			
+			let parseTos = [
+				(S.markeyCapByAvailableSupply, S_.market_cap_by_available_supply),
+				(S.priceBTC, S_.price_btc),
+				(S.priceUSD, S_.price_usd),
+				(S.volumeUSD, S_.volume_usd)
+			]
+			
+			if let json = json
+			{
+				for parseTo in parseTos
+				{
+					if let values = parseHistoricalValues(json, parseTo.1)
+					{
+						datas.append(
+							CurrencyData(
+								key: parseTo.0,
+								ranges: TimeRanges(ranges:[roundedRange]),
+								values: values,
+								cacheTime: cacheTime,
+								wasCached: wasCached
+							)
+						)
+					}
+				}
+
+				log.print("read web for \(currency.id)")
+				return datas;
+			}
+			
+			return nil
+		}
 	}
 	
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
