@@ -18,11 +18,11 @@ class ProxyFinder
 
 	init ()
 	{
-		try? scan()
+//		try? scan()
 		
-		repeater = repeatWithInterval(60.0) {
-			try? self.scan()
-		}
+//		repeater = repeatWithInterval(60.0) {
+//			try? self.scan()
+//		}
 	}
 	
 	func getRandomProxy () -> Proxy?
@@ -30,7 +30,14 @@ class ProxyFinder
 		objc_sync_enter(self)
     	defer { objc_sync_exit(self) }
 
-		return proxies.randomElement()
+		let proxy = proxies.popLast()
+		if proxies.isEmpty
+		{
+			try? scan()
+		}
+
+		return proxy
+//		return proxies.randomElement()
 	}
 	
 	func clear ()
@@ -40,8 +47,8 @@ class ProxyFinder
 	
 	func scan () throws
 	{
-		objc_sync_enter(self)
-    	defer { objc_sync_exit(self) }
+//		objc_sync_enter(self)
+//    	defer { objc_sync_exit(self) }
 
 		proxies.removeAll()
 
@@ -67,6 +74,8 @@ class ProxyFinder
 				proxies.append((ip, p))
 			}
 		}
+		
+		proxies = proxies.reversed()
 		
 	}
 
