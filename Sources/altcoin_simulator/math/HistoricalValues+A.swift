@@ -47,9 +47,14 @@ extension HistoricalValues
 		
 		return (last.value - first.value) / (last.time - first.time)
 	}
-
 	
+	var timeRange: TimeRange? {
+		guard let first = samples.first, let last = samples.last else {
+			return nil
+		}
 
+		return TimeRange(uncheckedBounds: (first.time, last.time))
+	}
 }
 
 

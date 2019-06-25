@@ -24,6 +24,7 @@ struct Currency
 	let name: String
 	let rank: Int
 	let tokens : [String]
+	let timeRange: TimeRange
 }
 
 struct HistoricalValue : Hashable
@@ -81,6 +82,7 @@ extension Currency : Codable
     	case name
     	case rank
     	case tokens
+    	case timeRange
     }
 }
 

@@ -12,7 +12,8 @@ let webDataProvider = DataProviderWeb()
 let diskDataProvider = try DataProviderDiskJSON()
 let memoryDataProvider = DataProviderMemory()
 let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
-let memoryCacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
+//let memoryCacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
+let memoryCacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
 let dataProvider = memoryCacheProvider
 let timeProvider = TimeProviderStep(now: TimeEvents.firstBubbleStart, stepEquation: StandardTimeEquations.nextDay)
@@ -32,3 +33,4 @@ let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(t
 let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
 try runner.run(until: TimeEvents.safeNow)
+diskDataProvider.flush()

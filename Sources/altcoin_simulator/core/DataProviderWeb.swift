@@ -17,6 +17,7 @@ class DataProviderWeb : DataProvider
 			folderName = "altcoin-simulator/http",
 
 			currenciesURLString = "https://s2.coinmarketcap.com/generated/search/quick_search.json",
+			currencyDataRangeURLStringTemplate = "https://graphs2.coinmarketcap.com/currencies/{id}/",
 			currencyDataURLStringTemplate = "https://graphs2.coinmarketcap.com/currencies/{id}/{startTime}/{endTime}/",
 			templateId = "{id}",
 			templateStartTime = "{startTime}",
@@ -34,38 +35,37 @@ class DataProviderWeb : DataProvider
 
 	init ()
 	{
-		if let dataFolder = getDataFolderUrl()
-		{
-			try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
-		}
 	}
 	
-	func getDataFolderUrl () -> URL?
+	
+	func getCurrencyDataRange(for id: String) throws -> TimeRange?
 	{
-		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+		let currencyDataRangeURLString = S_.currencyDataRangeURLStringTemplate
+			.replacingOccurrences(of: S_.templateId, with: id)
+		
+		let url = URL(string: currencyDataRangeURLString)!
+		let (json, error, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: url, useCache: true)
+		guard error == nil else { throw error! }
+
+		if let json = json
 		{
-			documentsURL.appendPathComponent(S_.folderName)
-			return documentsURL
+			if let values = parseHistoricalValues(json, S_.price_btc),
+				let lowerBound = values.timeRange?.lowerBound
+			{
+				return TimeRange(uncheckedBounds:
+					(lowerBound - TimeQuantities.Week,
+					Date.distantFuture.timeIntervalSinceReferenceDate)
+				)
+			}
 		}
 		
 		return nil
 	}
 	
-	func getFileUrlFor(_ fileName: String) -> URL?
-	{
-		if var dataFolderUrl = getDataFolderUrl()
-		{
-			dataFolderUrl.appendPathComponent(fileName)
-			return dataFolderUrl
-		}
-		
-		return nil
-	}
-	
-	func getCurrencies () -> [Currency]?
+	func getCurrencies () throws -> [Currency]?
 	{
 		let currenciesURL = URL(string: S_.currenciesURLString)!
-		let (json, error) = JSONURLTask.shared.dataTaskSync(with: currenciesURL)
+		let (json, _, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currenciesURL, useCache: false)
 
 		if let coins = json as? [Any]
 		{
@@ -79,17 +79,13 @@ class DataProviderWeb : DataProvider
 						let slug = coin[S_.slug] as? String,
 						let name = coin[S_.name] as? String,
 						let rank = coin[S_.rank] as? Int,
-						let tokens = coin[S_.tokens] as? [String]
+						let tokens = coin[S_.tokens] as? [String],
+						let timeRange = try getCurrencyDataRange(for: slug)
 					{
-						currencies.append(Currency(id: slug, name: name, rank: rank, tokens: tokens))
+						currencies.append(Currency(id: slug, name: name, rank: rank, tokens: tokens, timeRange: timeRange))
 					}
 				}
 			}
-			
-//			let selected = ["bitcoin", "litecoin", "chainlink"]
-//			currencies = currencies.filter { return selected.contains($0.id) }
-			currencies.sort { return $0.rank < $1.rank }
-			currencies = currencies.filter { return $0.rank < 4 }
 			
 			log.print("read web for currencies")
 			return currencies
@@ -97,6 +93,7 @@ class DataProviderWeb : DataProvider
 		
 		return nil
 	}
+
 
 	func parseHistoricalValues(_ json: Any?, _ index: String) -> HistoricalValues?
 	{
@@ -124,32 +121,14 @@ class DataProviderWeb : DataProvider
 		return nil
 	}
 
-	func convertUrlToFileName (_ url : URL) -> String
-	{
-		let s = url.absoluteString
-		return s.replacingOccurrences(of: ":", with: "=").replacingOccurrences(of: "/", with: "_")
-	}
-	
-	func getCacheFor (url: URL) -> Any?
-	{
-		if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
-		{
-			return try? JSONSerialization.jsonObject(with: Data(contentsOf: fileUrl), options: [])
-		}
-		return nil
-	}
-	
-	func setCacheFor (url: URL, json: Any?) throws
-	{
-		if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
-		{
-			let data = try JSONSerialization.data(withJSONObject: json, options: [])
-			try data.write(to: fileUrl)
-		}
-	}
 
-	func getCurrencyDatas_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
+		if !currency.timeRange.contains(range)
+		{
+			return []
+		}
+	
 		let roundedRange = range.round(1.0 * TimeQuantities.Week).clamped(to: 0 ... TimeEvents.safeNow )
 		log.print("getCurrencyDatas_ range \(TimeEvents.toString(range)) -> roundedRange \(TimeEvents.toString(roundedRange))")
 		
@@ -158,23 +137,9 @@ class DataProviderWeb : DataProvider
 			.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
 			.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
 		
-		print(currencyDataURLString)
-		
-		var json : Any?
-		
 		let currencyDataURL = URL(string: currencyDataURLString)!
-		if let json_ = getCacheFor(url: currencyDataURL)
-		{
-			json = json_
-		}
-		else
-		{
-			let (json_, error) = JSONURLTask.shared.dataTaskSync(with: currencyDataURL)
-			guard error == nil else { throw error! }
-			
-			try setCacheFor (url: currencyDataURL, json: json_)
-			json = json_
-		}
+		let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
+		guard error == nil else { throw error! }
 		
 		var datas = [CurrencyData]()
 		let cacheTime = Date().timeIntervalSinceReferenceDate
@@ -198,7 +163,7 @@ class DataProviderWeb : DataProvider
 							ranges: TimeRanges(ranges:[roundedRange]),
 							values: values,
 							cacheTime: cacheTime,
-							wasCached: false
+							wasCached: wasCached
 						)
 					)
 				}
@@ -211,64 +176,9 @@ class DataProviderWeb : DataProvider
 		return nil
 	}
 	
-	var sleepSeconds = 15.0
-	var requestDelaySeconds = 0.5
-	var lastRequestSecond : TimeInterval = 0
-	
-	func sleep(_ delay : Double)
+	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
-		let usecond : Double = 1000000
-		usleep(UInt32(delay * usecond))
-	}
-
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
-	{
-		var alreadySlept = false
-		var data : [CurrencyData]! = nil
-		
-		repeat
-		{
-			do
-			{
-				let requestTimeSecond = Date().timeIntervalSinceReferenceDate
-				let differenceSeconds = requestTimeSecond - lastRequestSecond
-				let delay = requestDelaySeconds - differenceSeconds
-				if delay > 0
-				{
-					sleep(delay)
-				}
-				
-				lastRequestSecond = requestTimeSecond
-				data = try getCurrencyDatas_(for: currency, key: key, in: range, with: resolution)
-			}
-			catch
-			{
-				print(error)
-				print("sleeping for \(sleepSeconds)")
-				sleep(sleepSeconds)
-
-				if alreadySlept
-				{
-					sleepSeconds *= 1.1
-				}
-				
-				if !alreadySlept
-				{
-					requestDelaySeconds *= 1.02
-					print("increased sleepSeconds to \(sleepSeconds) requestDelaySeconds \(requestDelaySeconds)")
-				}
-				
-				alreadySlept = true
-			}
-		} while data == nil
-		
-		return data
-	}
-	
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
-	{
-		let datas = getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
-
+		let datas = try getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
 		return datas?.filter { $0.key == key }.first
 	}
 }

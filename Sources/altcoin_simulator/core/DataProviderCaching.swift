@@ -34,7 +34,7 @@ class DataProviderCaching : DataProvider
 		
 		return nil
 	}
-
+	
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		if let data = try cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)

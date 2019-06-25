@@ -19,22 +19,26 @@ class TradeGeneratorVelocitiesMaximum : TradeGeneratorWithDataProviderAndTimeRan
 	override func generateTrades() throws -> [Trade]?
 	{
 		let p = relativeDataProvider
+//		guard let currencies = try p.getCurrencies()?.filter({ return $0.rank < 5 }) else { return nil }
 		guard let currencies = try p.getCurrencies() else { return nil }
-		
+
 		var trades = [Trade]()
 		
 		typealias IdToVelocity = (id: CurrencyId, velocity: Real)
 		
-		var idToVelocity = try currencies.enumerated().map { (i,c) -> IdToVelocity in
+		let idToVelocityQ = try currencies.enumerated().map { (i,c) -> IdToVelocity? in
 			//log.print("\(i)/\(currencies.count)")
-			return (id: c.id, velocity: try p.getCurrencyData(for: c, key: S.priceUSD, in: timeRange, with: resolution)?.values.velocity ?? -Real.greatestFiniteMagnitude)
+			if let velocity = try p.getCurrencyData(for: c, key: S.priceUSD, in: timeRange, with: resolution)?.values.velocity
+			{
+				return (id: c.id, velocity: velocity)
+			}
+			
+			return nil
 		}
 		
-		idToVelocity.sort {
-			return $0.velocity > $1.velocity
-		}
-		
-		idToVelocity.map { log.print("\($0.id): \($0.velocity)") }
+		var idToVelocity : [IdToVelocity] = idToVelocityQ.compactMap { return $0 }
+		idToVelocity.sort { return $0.velocity > $1.velocity }
+		idToVelocity.forEach { log.print("\($0.id): \($0.velocity)") }
 		
 		return trades
 	}

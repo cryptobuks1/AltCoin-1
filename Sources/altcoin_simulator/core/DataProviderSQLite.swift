@@ -26,6 +26,8 @@ class DataProviderDiskSQLite: DataCache
 		static let name = Expression<String>("name")
 		static let rank = Expression<Int>("rank")
 		static let tokens = Expression<String>("tokens")
+		static let timeRangeL = Expression<Double>("timeRangeL")
+		static let timeRangeU = Expression<Double>("timeRangeU")
 	}
 	
 	class CurrencyDatas_ {
@@ -103,7 +105,13 @@ class DataProviderDiskSQLite: DataCache
 	func getCurrencies () -> [Currency]?
 	{
 		let result = try? db.prepare(Currencies_.table).map {
-			return Currency (id: $0[Currencies_.id], name: $0[Currencies_.name], rank: $0[Currencies_.rank], tokens: $0[Currencies_.tokens].split(separator: ",").map { return String($0) })
+			return Currency (
+				id: $0[Currencies_.id],
+				name: $0[Currencies_.name],
+				rank: $0[Currencies_.rank],
+				tokens: $0[Currencies_.tokens].split(separator: ",").map { return String($0) },
+				timeRange: TimeRange(uncheckedBounds: ($0[Currencies_.timeRangeL],$0[Currencies_.timeRangeU]))
+			)
 		}
 		
 		return result;
@@ -116,7 +124,9 @@ class DataProviderDiskSQLite: DataCache
 				Currencies_.id <- $0.id,
 				Currencies_.name <- $0.name,
 				Currencies_.rank <- $0.rank,
-				Currencies_.tokens <- $0.tokens.joined(separator: ",")
+				Currencies_.tokens <- $0.tokens.joined(separator: ","),
+				Currencies_.timeRangeL <- $0.timeRange.lowerBound,
+				Currencies_.timeRangeU <- $0.timeRange.upperBound
 			));
 		}
 	}
@@ -158,6 +168,10 @@ class DataProviderDiskSQLite: DataCache
 		return nil
 	}
 	
+	func getCurrencyDataRange(for currency: Currency) throws -> TimeRange? {
+		return nil
+	}
+
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
 	{
 		if var currencyData = getCurrencyData(for: currency, key: key, in: range, with: resolution)

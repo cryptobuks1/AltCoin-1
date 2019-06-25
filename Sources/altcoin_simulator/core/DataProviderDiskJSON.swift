@@ -21,6 +21,8 @@ class DataProviderDiskJSON : DataCache
 			templateKey = "{key}"
 		
 	}
+	
+	var fileDatas = [String:CurrencyData]()
 
 	init() throws
 	{
@@ -107,13 +109,18 @@ class DataProviderDiskJSON : DataCache
 	{
 		write(fileName: S.currenciesFileName, data: data)
 	}
-
+	
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
 	{
 		let fileName = S.currencyFileNameTemplate
 			.replacingOccurrences(of: S.templateId, with: currency.id)
 			.replacingOccurrences(of: S.templateKey, with: key)
 
+		if let cached = fileDatas[fileName]
+		{
+			return cached.subset(range)
+		}
+	
 		var currencyData = read(fileName: fileName, type: CurrencyData.self)
 		currencyData?.wasCached = true
 		
@@ -126,9 +133,12 @@ class DataProviderDiskJSON : DataCache
 			.replacingOccurrences(of: S.templateId, with: currency.id)
 			.replacingOccurrences(of: S.templateKey, with: key)
 
-		if var currencyData = read(fileName: fileName, type: CurrencyData.self)
+		let cached = fileDatas[fileName]
+		if var currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
 		{
+			fileDatas[fileName] = currencyData
 			currencyData.wasCached = true
+
 			if currencyData.ranges.contains(range)
 			{
 				return [currencyData]
@@ -137,6 +147,8 @@ class DataProviderDiskJSON : DataCache
 		
 		return nil
 	}
+	
+	var putCurrencyCount = 0
 	
 	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
 	{
@@ -148,15 +160,32 @@ class DataProviderDiskJSON : DataCache
 				.replacingOccurrences(of: S.templateId, with: currency.id)
 				.replacingOccurrences(of: S.templateKey, with: data.key)
 
-			if let currencyData = read(fileName: fileName, type: CurrencyData.self)
+			let cached = fileDatas[fileName]
+			if let currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
 			{
-				let merged = currencyData.merge(data)
-				write(fileName: fileName, data: merged)
+				var merged = currencyData.merge(data)
+				merged?.wasCached = true
+				
+				fileDatas[fileName] = merged
 			}
 			else
 			{
-				write(fileName: fileName, data: data)
+				fileDatas[fileName] = data
 			}
+		}
+		
+		putCurrencyCount += 1
+		if putCurrencyCount % 10 == 0
+		{
+			flush()
+		}
+	}
+	
+	func flush ()
+	{
+		for fileData in fileDatas
+		{
+			write(fileName: fileData.key, data: fileData.value)
 		}
 	}
 }
