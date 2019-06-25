@@ -11,6 +11,7 @@ import Foundation
 class S
 {
 	static let
+		documents = "altcoin-simulator",
 		priceUSD = "priceUSD",
 		priceBTC = "priceBTC",
 		volumeUSD = "volumeUSD",

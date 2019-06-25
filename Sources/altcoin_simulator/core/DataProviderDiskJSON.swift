@@ -12,9 +12,9 @@ class DataProviderDiskJSON : DataCache
 {
 	let log = Log(clazz: DataProviderDiskJSON.self)
 	
-	class S {
+	class S_ {
 		static let
-			folderName = "altcoin-simulator/json",
+			folderName = "\(S.documents)/json",
 			currenciesFileName = "currencies.json",
 			currencyFileNameTemplate = "currency-{id}.{key}.json",
 			templateId = "{id}",
@@ -36,7 +36,7 @@ class DataProviderDiskJSON : DataCache
 	{
 		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 		{
-			documentsURL.appendPathComponent(S.folderName)
+			documentsURL.appendPathComponent(S_.folderName)
 			return documentsURL
 		}
 		
@@ -102,19 +102,19 @@ class DataProviderDiskJSON : DataCache
 	
 	func getCurrencies () -> [Currency]?
 	{
-		return read(fileName: S.currenciesFileName, type: Array<Currency>.self)
+		return read(fileName: S_.currenciesFileName, type: Array<Currency>.self)
 	}
 
 	func putCurrencies (_ data: [Currency])
 	{
-		write(fileName: S.currenciesFileName, data: data)
+		write(fileName: S_.currenciesFileName, data: data)
 	}
 	
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
 	{
-		let fileName = S.currencyFileNameTemplate
-			.replacingOccurrences(of: S.templateId, with: currency.id)
-			.replacingOccurrences(of: S.templateKey, with: key)
+		let fileName = S_.currencyFileNameTemplate
+			.replacingOccurrences(of: S_.templateId, with: currency.id)
+			.replacingOccurrences(of: S_.templateKey, with: key)
 
 		if let cached = fileDatas[fileName]
 		{
@@ -129,9 +129,9 @@ class DataProviderDiskJSON : DataCache
 	
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
 	{
-		let fileName = S.currencyFileNameTemplate
-			.replacingOccurrences(of: S.templateId, with: currency.id)
-			.replacingOccurrences(of: S.templateKey, with: key)
+		let fileName = S_.currencyFileNameTemplate
+			.replacingOccurrences(of: S_.templateId, with: currency.id)
+			.replacingOccurrences(of: S_.templateKey, with: key)
 
 		let cached = fileDatas[fileName]
 		if var currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
@@ -156,9 +156,9 @@ class DataProviderDiskJSON : DataCache
 		{
 			print("putCurrencyDatas data \(data.key) timeRange \(TimeEvents.toString(data.ranges.ranges.first!))")
 			
-			let fileName = S.currencyFileNameTemplate
-				.replacingOccurrences(of: S.templateId, with: currency.id)
-				.replacingOccurrences(of: S.templateKey, with: data.key)
+			let fileName = S_.currencyFileNameTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateKey, with: data.key)
 
 			let cached = fileDatas[fileName]
 			if let currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)

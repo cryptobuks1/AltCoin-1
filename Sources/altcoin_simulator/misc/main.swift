@@ -8,6 +8,8 @@
 
 import Foundation
 
+JSONURLSessionManager.shared.addProxies(ProxyFinder.shared.proxies)
+
 let webDataProvider = DataProviderWeb()
 let diskDataProvider = try DataProviderDiskJSON()
 let memoryDataProvider = DataProviderMemory()

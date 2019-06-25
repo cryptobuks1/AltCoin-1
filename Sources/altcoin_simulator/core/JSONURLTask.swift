@@ -72,6 +72,77 @@ class WebCache
 	}
 }
 
+extension URLSession {
+
+    func withProxy(proxyURL: String, proxyPort: Int) -> URLSession
+    {
+        let configuration = self.configuration
+
+		configuration.connectionProxyDictionary = [
+			kCFNetworkProxiesHTTPEnable: true,
+			kCFNetworkProxiesHTTPProxy: proxyURL,
+			kCFNetworkProxiesHTTPPort: proxyPort,
+			kCFNetworkProxiesHTTPSEnable: true,
+			kCFNetworkProxiesHTTPSProxy: proxyURL,
+			kCFNetworkProxiesHTTPSPort: proxyPort
+		]
+		
+		configuration.timeoutIntervalForRequest = 3.0
+
+        return URLSession(configuration: configuration, delegate: self.delegate, delegateQueue: self.delegateQueue)
+    }
+}
+
+class JSONURLSessionManager
+{
+	typealias Proxy = (url: String, port: Int)
+
+	static var shared = JSONURLSessionManager()
+
+	let log = Log(clazz: JSONURLSessionManager.self)
+	var sessions = [URLSession]()
+	var sessionIndex = 0
+
+	init ()
+	{
+		sessions.append(URLSession.shared)
+	}
+
+	func addProxy(_ proxy: Proxy)
+	{
+		sessions.append(URLSession.shared.withProxy(proxyURL: proxy.url, proxyPort: proxy.port))
+	}
+	
+	func addProxies(_ proxies: [Proxy])
+	{
+		proxies.forEach { addProxy($0) }
+	}
+	
+	func cycle () -> Bool
+	{
+		if sessions.count == 1
+		{
+			return false
+		}
+		
+		log.print("cycling")
+		
+		sessionIndex += 1
+		sessionIndex %= sessions.count
+		
+		return true
+	}
+	
+	var session : URLSession {
+		return sessions[sessionIndex]
+	}
+	
+	func readFromDisk (fileName: String)
+	{
+		
+	}
+}
+
 class JSONURLTask
 {
 	let log = Log(clazz: JSONURLTask.self)
@@ -84,7 +155,7 @@ class JSONURLTask
 	
 	func dataTask (with url: URL, callback: @escaping (_ json:Any?, _ error:Error?)->()) -> URLSessionDataTask
 	{
-		let task = URLSession.shared.dataTask(with: url)
+		let task = JSONURLSessionManager.shared.session.dataTask(with: url)
 		{
 			data, response, error in
 			
@@ -150,7 +221,7 @@ class JSONURLTask
 	}
 
 	var sleepSeconds = 30.0
-	var requestDelaySeconds = 0.5
+	var requestDelaySeconds = 0.1
 	var lastRequestSecond : TimeInterval = 0
 	
 	func sleep(_ delay : Double)
@@ -191,21 +262,26 @@ class JSONURLTask
 			catch
 			{
 				print(error)
-				print("sleeping for \(sleepSeconds)")
-				sleep(sleepSeconds)
 
-				if alreadySlept
+				if !JSONURLSessionManager.shared.cycle()
 				{
-					sleepSeconds *= 1.1
-				}
+					log.print("could not cycle, instead sleeping.")
+					print("sleeping for \(sleepSeconds)")
+					sleep(sleepSeconds)
+
+					if alreadySlept
+					{
+						sleepSeconds *= 1.1
+					}
+					
+					if !alreadySlept
+					{
+						 requestDelaySeconds *= 1.02
+						 print("increased sleepSeconds to \(sleepSeconds) requestDelaySeconds \(requestDelaySeconds)")
+					}
 				
-				if !alreadySlept
-				{
-					requestDelaySeconds *= 1.02
-					print("increased sleepSeconds to \(sleepSeconds) requestDelaySeconds \(requestDelaySeconds)")
+					alreadySlept = true
 				}
-				
-				alreadySlept = true
 			}
 		} while true
 	}

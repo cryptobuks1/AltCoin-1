@@ -14,9 +14,9 @@ class DataProviderDiskSQLite: DataCache
 	let log = Log(clazz: DataProviderDiskJSON.self)
 	var db: Connection! = nil
 	
-	class S {
+	class S_ {
 		static let
-			folderName = "altcoin-simulator/sqlite",
+			folderName = "\(S.documents)/sqlite",
 			currenciesFileName = "currencies.sqlite3"
 	}
 
@@ -59,7 +59,7 @@ class DataProviderDiskSQLite: DataCache
 		if let dataFolder = getDataFolderUrl()
 		{
 			try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
-			db = try Connection(dataFolder.appendingPathComponent(S.currenciesFileName).relativePath)
+			db = try Connection(dataFolder.appendingPathComponent(S_.currenciesFileName).relativePath)
 			
 			let _ = try? db.run(Currencies_.table.create { t in
 				t.column(Currencies_.id, primaryKey: true)
@@ -94,7 +94,7 @@ class DataProviderDiskSQLite: DataCache
 	{
 		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 		{
-			documentsURL.appendPathComponent(S.folderName)
+			documentsURL.appendPathComponent(S_.folderName)
 			return documentsURL
 		}
 		

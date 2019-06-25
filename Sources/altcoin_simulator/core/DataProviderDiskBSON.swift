@@ -11,9 +11,9 @@ import BSON
 
 class DataProviderDiskBSON : DataCache
 {
-	class S {
+	class S_ {
 		static let
-			folderName = "altcoin-simulator/bson",
+			folderName = "\(S.documents)/bson",
 			currenciesFileName = "currencies.json",
 			currencyFileNameTemplate = "currency-{id}.{key}.bson",
 			templateId = "{id}",
@@ -33,7 +33,7 @@ class DataProviderDiskBSON : DataCache
 	{
 		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 		{
-			documentsURL.appendPathComponent(S.folderName)
+			documentsURL.appendPathComponent(S_.folderName)
 			return documentsURL
 		}
 		
@@ -90,19 +90,19 @@ class DataProviderDiskBSON : DataCache
 	
 	func getCurrencies () -> [Currency]?
 	{
-		return read(fileName: S.currenciesFileName, type: Array<Currency>.self)
+		return read(fileName: S_.currenciesFileName, type: Array<Currency>.self)
 	}
 
 	func putCurrencies (_ data: [Currency])
 	{
-		write(fileName: S.currenciesFileName, data: data)
+		write(fileName: S_.currenciesFileName, data: data)
 	}
 
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
 	{
-		let fileName = S.currencyFileNameTemplate
-			.replacingOccurrences(of: S.templateId, with: currency.id)
-			.replacingOccurrences(of: S.templateKey, with: key)
+		let fileName = S_.currencyFileNameTemplate
+			.replacingOccurrences(of: S_.templateId, with: currency.id)
+			.replacingOccurrences(of: S_.templateKey, with: key)
 
 		var currencyData = read(fileName: fileName, type: CurrencyData.self)
 		currencyData?.wasCached = true
@@ -118,9 +118,9 @@ class DataProviderDiskBSON : DataCache
 	{
 		for data in datas
 		{
-			let fileName = S.currencyFileNameTemplate
-				.replacingOccurrences(of: S.templateId, with: currency.id)
-				.replacingOccurrences(of: S.templateKey, with: data.key)
+			let fileName = S_.currencyFileNameTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateKey, with: data.key)
 				
 			write(fileName: fileName, data: data)
 		}

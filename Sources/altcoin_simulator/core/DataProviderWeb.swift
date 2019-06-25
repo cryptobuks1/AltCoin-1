@@ -14,7 +14,7 @@ class DataProviderWeb : DataProvider
 
 	class S_ {
 		static let
-			folderName = "altcoin-simulator/http",
+			folderName = "\(S.documents)/http",
 
 			currenciesURLString = "https://s2.coinmarketcap.com/generated/search/quick_search.json",
 			currencyDataRangeURLStringTemplate = "https://graphs2.coinmarketcap.com/currencies/{id}/",
