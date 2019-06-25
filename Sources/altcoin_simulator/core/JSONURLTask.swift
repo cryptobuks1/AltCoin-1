@@ -104,42 +104,25 @@ class JSONURLSessionManager
 	static var shared = ThreadShared<JSONURLSessionManager>({ return JSONURLSessionManager() })
 
 	let log = Log(clazz: JSONURLSessionManager.self)
-	var sessions = [URLSession]()
-	var sessionIndex = 0
+	var session : URLSession! = nil
 
 	init ()
 	{
-		sessions.append(URLSession.shared)
-		addProxies(ProxyFinder.shared.proxies.shuffled())
+		_ = cycle()
 	}
 
-	func addProxy(_ proxy: Proxy)
-	{
-		sessions.append(URLSession.shared.withProxy(proxyURL: proxy.url, proxyPort: proxy.port))
-	}
-	
-	func addProxies(_ proxies: [Proxy])
-	{
-		proxies.forEach { addProxy($0) }
-	}
-	
 	func cycle () -> Bool
 	{
-		if sessions.count == 1
-		{
-			return false
-		}
-		
 		log.print("cycling")
 		
-		sessionIndex += 1
-		sessionIndex %= sessions.count
+		if let proxy = ProxyFinder.shared.getRandomProxy()
+		{
+			session = URLSession.shared.withProxy(proxyURL: proxy.url, proxyPort: proxy.port)
+			return true
+		}
 		
-		return true
-	}
-	
-	var session : URLSession {
-		return sessions[sessionIndex]
+		session = URLSession.shared;
+		return false
 	}
 	
 	func readFromDisk (fileName: String)

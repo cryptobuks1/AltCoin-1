@@ -7,10 +7,28 @@
 
 import Foundation
 
+
 func synchronized<T>(_ lock: AnyObject, _ body: () throws -> T) rethrows -> T {
     objc_sync_enter(lock)
     defer { objc_sync_exit(lock) }
     return try body()
+}
+
+typealias RepeatWithInterval = DispatchSourceTimer
+
+func repeatWithInterval (_ interval: TimeInterval, _ block: @escaping () -> ()) -> RepeatWithInterval
+{
+	let source = DispatchSource.makeTimerSource()
+	source.schedule(deadline: .now() + interval, repeating: interval)
+	source.setEventHandler(handler: { block() })
+	source.resume();
+
+	return source
+}
+
+func cancelRepeatWithInterval (_ r: RepeatWithInterval)
+{
+	r.cancel()
 }
 
 class ThreadShared<T> {
