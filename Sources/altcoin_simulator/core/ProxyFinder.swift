@@ -12,7 +12,7 @@ class ProxyFinder
 {
 	typealias Proxy = (url: String, port: Int)
 	var proxies = [Proxy]()
-
+	
 	static let shared = ProxyFinder()
 
 	init ()
@@ -27,14 +27,15 @@ class ProxyFinder
 	
 	func scan () throws
 	{
-		let url = URL(string: "https://www.us-proxy.org/")
+//		let url = URL(string: "https://www.us-proxy.org/")
+		let url = URL(string: "https://free-proxy-list.net/")
 		let html = try String(contentsOf: url!, encoding: .utf8)
 		let doc: Document = try SwiftSoup.parse(html)
 		let trs = try doc.select("tbody > tr")
 		
 		for (i, tr) in trs.array().enumerated()
 		{
-			if i > 20
+			if i > 50
 			{
 				break
 			}
@@ -48,8 +49,6 @@ class ProxyFinder
 				proxies.append((ip, p))
 			}
 		}
-		
-		
 		
 	}
 

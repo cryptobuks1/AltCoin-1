@@ -97,7 +97,7 @@ class JSONURLSessionManager
 {
 	typealias Proxy = (url: String, port: Int)
 
-	static var shared = JSONURLSessionManager()
+	static var shared = ThreadShared<JSONURLSessionManager>({ return JSONURLSessionManager() })
 
 	let log = Log(clazz: JSONURLSessionManager.self)
 	var sessions = [URLSession]()
@@ -106,6 +106,7 @@ class JSONURLSessionManager
 	init ()
 	{
 		sessions.append(URLSession.shared)
+		addProxies(ProxyFinder.shared.proxies.shuffled())
 	}
 
 	func addProxy(_ proxy: Proxy)
@@ -155,7 +156,7 @@ class JSONURLTask
 	
 	func dataTask (with url: URL, callback: @escaping (_ json:Any?, _ error:Error?)->()) -> URLSessionDataTask
 	{
-		let task = JSONURLSessionManager.shared.session.dataTask(with: url)
+		let task = JSONURLSessionManager.shared.v.session.dataTask(with: url)
 		{
 			data, response, error in
 			
@@ -263,7 +264,7 @@ class JSONURLTask
 			{
 				print(error)
 
-				if !JSONURLSessionManager.shared.cycle()
+				if !JSONURLSessionManager.shared.v.cycle()
 				{
 					log.print("could not cycle, instead sleeping.")
 					print("sleeping for \(sleepSeconds)")

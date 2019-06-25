@@ -152,6 +152,9 @@ class DataProviderDiskJSON : DataCache
 	
 	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
 	{
+		objc_sync_enter(self)
+    	defer { objc_sync_exit(self) }
+
 		for data in datas
 		{
 			print("putCurrencyDatas data \(data.key) timeRange \(TimeEvents.toString(data.ranges.ranges.first!))")

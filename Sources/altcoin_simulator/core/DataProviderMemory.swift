@@ -29,6 +29,9 @@ class DataProviderMemory : DataCache
 
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
 	{
+		objc_sync_enter(self)
+    	defer { objc_sync_exit(self) }
+
 		return currencyDatas[currency.id]?[key]?.subset(range)
 	}
 	
@@ -47,6 +50,9 @@ class DataProviderMemory : DataCache
 
 	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
 	{
+		objc_sync_enter(self)
+    	defer { objc_sync_exit(self) }
+
 		var keyedCurrencyDatas = currencyDatas[currency.id] ?? [DataKey:CurrencyData]()
 		
 		for data in datas

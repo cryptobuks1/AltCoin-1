@@ -126,7 +126,7 @@ class DataProviderWeb : DataProvider
 
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-		if !currency.timeRange.contains(range)
+		if !currency.timeRange.extends(range)
 		{
 			return []
 		}
