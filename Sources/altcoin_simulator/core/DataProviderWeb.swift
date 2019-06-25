@@ -71,7 +71,7 @@ class DataProviderWeb : DataProvider
 		{
 			var currencies = [Currency]()
 
-			for coin in coins
+			for (i, coin) in coins.enumerated()
 			{
 				if let coin = coin as? [String:Any]
 				{
@@ -85,6 +85,8 @@ class DataProviderWeb : DataProvider
 						currencies.append(Currency(id: slug, name: name, rank: rank, tokens: tokens, timeRange: timeRange))
 					}
 				}
+				
+				log.print ("getCurrency \(i)/\(coins.count)")
 			}
 			
 			log.print("read web for currencies")

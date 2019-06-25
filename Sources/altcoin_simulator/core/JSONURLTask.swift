@@ -149,7 +149,7 @@ class JSONURLTask
 		return result
 	}
 
-	var sleepSeconds = 15.0
+	var sleepSeconds = 30.0
 	var requestDelaySeconds = 0.5
 	var lastRequestSecond : TimeInterval = 0
 	
