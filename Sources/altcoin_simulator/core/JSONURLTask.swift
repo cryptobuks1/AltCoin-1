@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import SwiftyJSON
 
 class WebCache
 {
@@ -53,23 +54,23 @@ class WebCache
 		return s.replacingOccurrences(of: ":", with: "=").replacingOccurrences(of: "/", with: "#")
 	}
 	
-	func getCacheFor (url: URL) -> Any?
+	func getCacheFor (url: URL) -> JSON?
 	{
 		return autoreleasepool {
-			if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
-			{
-				return try? JSONSerialization.jsonObject(with: Data(contentsOf: fileUrl), options: [])
-			}
-			return nil
+		if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+		{
+			return try? JSON(data: Data(contentsOf: fileUrl), options: [])
+		}
+		return nil
 		}
 	}
 	
-	func setCacheFor (url: URL, json: Any?) throws
+	func setCacheFor (url: URL, json: JSON?) throws
 	{
 		try autoreleasepool {
 			if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
 			{
-				let data = try JSONSerialization.data(withJSONObject: json, options: [])
+				let data = try json.rawData(options: [])
 				try data.write(to: fileUrl, options: .atomic)
 			}
 		}
@@ -80,7 +81,7 @@ extension URLSession {
 
     func withProxy(proxyURL: String, proxyPort: Int) -> URLSession
     {
-        let configuration = self.configuration
+        let configuration = URLSessionConfiguration.ephemeral
 
 		configuration.connectionProxyDictionary = [
 			kCFNetworkProxiesHTTPEnable: true,
@@ -141,14 +142,14 @@ class JSONURLTask
 
 	static let shared = JSONURLTask()
 	
-	func dataTask (with url: URL, callback: @escaping (_ json:Any?, _ error:Error?)->()) -> URLSessionDataTask
+	func dataTask (with url: URL, callback: @escaping (_ json:JSON?, _ error:Error?)->()) -> URLSessionDataTask
 	{
 		let task = JSONURLSessionManager.shared.v.session.dataTask(with: url)
 		{
 			data, response, error in
 			
 			var transformedError : Error? = error
-			var transformedData : Any? = nil
+			var transformedData : JSON? = nil
 
 			// check for a non 200
 			if error == nil
@@ -163,7 +164,7 @@ class JSONURLTask
 						}
 					}
 			
-					transformedData = try JSONSerialization.jsonObject(with: data!, options: [])
+					transformedData = try JSON(data: data!)
 				}
 				catch
 				{
@@ -177,7 +178,7 @@ class JSONURLTask
 		return task;
 	}
 	
-	func dataTaskSync (with url: URL, useCache: Bool) -> (json: Any?, error: Error?, wasCached: Bool)
+	func dataTaskSync (with url: URL, useCache: Bool) -> (json: JSON?, error: Error?, wasCached: Bool)
 	{
 		if useCache, let json = WebCache.instance.getCacheFor(url: url)
 		{
@@ -186,7 +187,7 @@ class JSONURLTask
 		}
 		
 		let sem = DispatchSemaphore(value: 0)
-		var result : (Any?, Error?, Bool)! = nil
+		var result : (JSON?, Error?, Bool)! = nil
 		
 		let task = dataTask(with: url) {
 			json, error in
@@ -209,7 +210,7 @@ class JSONURLTask
 	}
 
 	var sleepSeconds = 30.0
-	var requestDelaySeconds = 0.0
+	var requestDelaySeconds = 1.0
 	var lastRequestSecond : TimeInterval = 0
 	
 	func sleep(_ delay : Double)
@@ -218,7 +219,7 @@ class JSONURLTask
 		usleep(UInt32(delay * usecond))
 	}
 
-	func dataTaskSyncRateLimitRetry (with url: URL, useCache: Bool) -> (json: Any?, error: Error?, wasCached: Bool)
+	func dataTaskSyncRateLimitRetry (with url: URL, useCache: Bool) -> (json: JSON?, error: Error?, wasCached: Bool)
 	{
 		var alreadySlept = false
 

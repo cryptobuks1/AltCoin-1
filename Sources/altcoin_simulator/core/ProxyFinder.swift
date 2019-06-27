@@ -11,6 +11,10 @@ import SwiftSoup
 class ProxyFinder
 {
 	typealias Proxy = (url: String, port: Int)
+	
+	var urlStrings = ["https://www.sslproxies.org/", "https://www.us-proxy.org/", "https://free-proxy-list.net/"]
+	var urlStringIndex = 0
+	
 	var proxies = [Proxy]()
 	var repeater : RepeatWithInterval? = nil
 	
@@ -52,8 +56,9 @@ class ProxyFinder
 
 		proxies.removeAll()
 
-//		let url = URL(string: "https://www.us-proxy.org/")
-		let url = URL(string: "https://free-proxy-list.net/")
+		let url = URL(string: urlStrings[urlStringIndex % urlStrings.count])
+		urlStringIndex += 1
+		
 		let html = try String(contentsOf: url!, encoding: .utf8)
 		let doc: Document = try SwiftSoup.parse(html)
 		let trs = try doc.select("tbody > tr")

@@ -18,7 +18,7 @@ let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: dis
 let memoryCacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
 let dataProvider = memoryCacheProvider
-let timeProvider = TimeProviderStep(now: TimeEvents.firstBubbleStart, stepEquation: StandardTimeEquations.nextDay)
+let timeProvider = TimeProviderStep(now: TimeEvents.year2019, stepEquation: StandardTimeEquations.nextDay)
 
 let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)
 
