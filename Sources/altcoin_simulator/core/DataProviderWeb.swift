@@ -7,7 +7,7 @@
 //
 
 import Foundation
-import SwiftyJSON
+import sajson_swift
 
 class DataProviderWeb : DataProvider
 {
@@ -69,55 +69,65 @@ class DataProviderWeb : DataProvider
 		let currenciesURL = URL(string: S_.currenciesURLString)!
 		let (json, _, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currenciesURL, useCache: false)
 
-		if let coins = json?.array
-		{
-			var currencies = [Currency]()
+		var currencies = [Currency]()
 
-			for (i, coin) in coins.enumerated()
-			{
+		return json?.doc.withRootValueReader { coins_ -> [Currency]? in
+			guard case .array(let coins) = coins_ else { return nil }
+
+			try? coins.enumerated().forEach({ (i, coin_) in
+				guard case .object(let coin) = coin_ else { return }
+				
 				if
-					let slug = coin[S_.slug].string,
-					let name = coin[S_.name].string,
-					let rank = coin[S_.rank].int,
-					let tokens = coin[S_.tokens].array?.map({ return $0.string }) as? [String],
+					let slug = coin[S_.slug]?.valueAsAny as? String,
+					let name = coin[S_.name]?.valueAsAny as? String,
+					let rank = Int(any: coin[S_.rank]?.valueAsAny),
+					let tokens = coin[S_.tokens]?.valueAsAny as? [String],
 					let timeRange = try getCurrencyDataRange(for: slug)
 				{
-					currencies.append(Currency(id: slug, name: name, rank: rank, tokens: tokens, timeRange: timeRange))
+					currencies.append(Currency(id: slug, name: name, rank: Int(rank), tokens: tokens, timeRange: timeRange))
 				}
-				
+				else
+				{
+					print("failed to deserialize coin \(coin)")
+				}
+
 				log.print ("getCurrency \(i)/\(coins.count)")
-			}
+			})
 			
 			log.print("read web for currencies")
 			return currencies
 		}
-		
-		return nil
 	}
 
 
 	func parseHistoricalValues(_ json: JSON?, _ index: String) -> HistoricalValues?
 	{
-		if let data = json?[index].array
-		{
+		return json?.doc.withRootValueReader { keys_ -> HistoricalValues? in
+			guard case .object(let keys) = keys_ else { return nil }
+			guard case .array(let data) = keys[index]! else { return nil }
+
 			var historicalValues = [HistoricalValue]()
 		
 			for datum in data
 			{
+				guard case .array(let v) = datum else { return nil }
+
 				// why NSNumber and not Double?  Causes a memory leak!  Swift bug apparently.
-				if let v0 = datum[0].double, let v1 = datum[1].double
+				if let v0 = Double(any: v[0].valueAsAny), let v1 = Double(any: v[1].valueAsAny)
 				{
 					historicalValues.append(HistoricalValue(time: TimeEvents.toTimeInterval(v0), value: v1))
+				}
+				else
+				{
+					print("failed to deserialize historical value \(v)")
 				}
 			}
 			
 			let values = HistoricalValues(samples: historicalValues)
 			logDetail.print("parsed historical values have median time span \(values.medianTimeBetweenSamples)")
-
+			
 			return values
 		}
-		
-		return nil
 	}
 
 

@@ -7,7 +7,10 @@
 //
 
 import Foundation
-import SwiftyJSON
+import sajson_swift
+
+typealias JSON = (data: Data, doc: sajson_swift.Document)
+typealias JSONNode = sajson_swift.Value
 
 class WebCache
 {
@@ -56,23 +59,23 @@ class WebCache
 	
 	func getCacheFor (url: URL) -> JSON?
 	{
-		return autoreleasepool {
 		if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
 		{
-			return try? JSON(data: Data(contentsOf: fileUrl), options: [])
+			if let data = try? Data(contentsOf: fileUrl),
+				let json = try? parse(allocationStrategy: .single, input: data)
+			{
+				return (data, json)
+			}
 		}
 		return nil
-		}
 	}
 	
 	func setCacheFor (url: URL, json: JSON?) throws
 	{
-		try autoreleasepool {
-			if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
-			{
-				let data = try json.rawData(options: [])
-				try data.write(to: fileUrl, options: .atomic)
-			}
+		if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+		{
+			let data = json.0
+			try data.write(to: fileUrl, options: .atomic)
 		}
 	}
 }
@@ -164,7 +167,8 @@ class JSONURLTask
 						}
 					}
 			
-					transformedData = try JSON(data: data!)
+					let json = try parse(allocationStrategy: .single, input: data!)
+					transformedData = (data!, json)
 				}
 				catch
 				{

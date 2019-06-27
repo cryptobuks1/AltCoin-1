@@ -11,6 +11,15 @@
         }
       },
       {
+        "package": "sajson_swift",
+        "repositoryURL": "https://github.com/timprepscius/sajson_swift.git",
+        "state": {
+          "branch": "master",
+          "revision": "66f298f6902e9a192dcbaf628d2d66c5bb2458c9",
+          "version": null
+        }
+      },
+      {
         "package": "SigmaSwiftStatistics",
         "repositoryURL": "https://github.com/evgenyneu/SigmaSwiftStatistics.git",
         "state": {
@@ -53,15 +62,6 @@
           "branch": null,
           "revision": "11da8c685ddde2d519fad04a7daf8485bbbc773e",
           "version": "1.7.5"
-        }
-      },
-      {
-        "package": "SwiftyJSON",
-        "repositoryURL": "https://github.com/SwiftyJSON/SwiftyJSON.git",
-        "state": {
-          "branch": null,
-          "revision": "2b6054efa051565954e1d2b9da831680026cd768",
-          "version": "4.3.0"
         }
       }
     ]

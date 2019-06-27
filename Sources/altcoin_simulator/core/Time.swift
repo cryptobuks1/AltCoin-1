@@ -36,6 +36,16 @@ class StandardTimeRanges
 
 class TimeEvents
 {
+	static func roundDown (_ t: TimeInterval, range r: TimeInterval) -> TimeInterval
+	{
+		return floor(t/r) * r
+	}
+	
+	static func roundUp (_ t: TimeInterval, range r: TimeInterval) -> TimeInterval
+	{
+		return ceil(t/r) * r
+	}
+
 	static func toUnix(_ t: TimeInterval) -> Int64
 	{
 		return Int64(Date(timeIntervalSinceReferenceDate: t).timeIntervalSince1970) * 1000
@@ -69,6 +79,7 @@ class TimeEvents
 	static let firstBubbleCrash = toDate("2017-12-16T00:00:00+0000").timeIntervalSinceReferenceDate
 	static let secondBubbleStart = toDate("2019-02-01T00:00:00+0000").timeIntervalSinceReferenceDate
 	static let year2019 = toDate("2019-01-01T00:00:00+0000").timeIntervalSinceReferenceDate
+	static let oneMonthAgo = Date().timeIntervalSinceReferenceDate - 4 * TimeQuantities.Week
 
 	static let now = Date().timeIntervalSinceReferenceDate
 	static let safeNow = now - TimeQuantities.Hour
