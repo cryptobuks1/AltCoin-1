@@ -214,7 +214,7 @@ class JSONURLTask
 	}
 
 	var sleepSeconds = 30.0
-	var requestDelaySeconds = 1.0
+	var requestDelaySeconds = 0.25
 	var lastRequestSecond : TimeInterval = 0
 	
 	func sleep(_ delay : Double)

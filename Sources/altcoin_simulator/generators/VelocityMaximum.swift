@@ -19,14 +19,16 @@ class TradeGeneratorVelocitiesMaximum : TradeGeneratorWithDataProviderAndTimeRan
 	override func generateTrades() throws -> [Trade]?
 	{
 		let p = relativeDataProvider
-//		guard let currencies = try p.getCurrencies()?.filter({ return $0.rank < 5 }) else { return nil }
-		guard let currencies = try p.getCurrencies() else { return nil }
+		
+		// this line has the filter, which will get only the top 5 currencies
+		guard let currencies = try p.getCurrencies()?.filter({ return $0.rank < 5 }) else { return nil }
+
+		// this line does not have the first, so it will get all currencies
+//		guard let currencies = try p.getCurrencies() else { return nil }
 
 		var trades = [Trade]()
 		
 		typealias IdToVelocity = (id: CurrencyId, velocity: Real)
-		
-		
 		
 		let idToVelocityQ : [IdToVelocity?] = try currencies.enumerated().map_parallel { (i, c) -> IdToVelocity? in
 			//log.print("\(i)/\(currencies.count)")

@@ -69,33 +69,33 @@ class DataProviderWeb : DataProvider
 		let currenciesURL = URL(string: S_.currenciesURLString)!
 		let (json, _, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currenciesURL, useCache: false)
 
-		var currencies = [Currency]()
-
 		return json?.doc.withRootValueReader { coins_ -> [Currency]? in
 			guard case .array(let coins) = coins_ else { return nil }
 
-			try? coins.enumerated().forEach({ (i, coin_) in
-				guard case .object(let coin) = coin_ else { return }
+			let currencies = coins.enumerated().map_parallel({ arg -> Currency? in
+				let (i, coin_) = arg
+				guard case .object(let coin) = coin_ else { return nil }
 				
 				if
 					let slug = coin[S_.slug]?.valueAsAny as? String,
 					let name = coin[S_.name]?.valueAsAny as? String,
 					let rank = Int(any: coin[S_.rank]?.valueAsAny),
 					let tokens = coin[S_.tokens]?.valueAsAny as? [String],
-					let timeRange = try getCurrencyDataRange(for: slug)
+					let timeRange = try? getCurrencyDataRange(for: slug)
 				{
-					currencies.append(Currency(id: slug, name: name, rank: Int(rank), tokens: tokens, timeRange: timeRange))
+					return Currency(id: slug, name: name, rank: Int(rank), tokens: tokens, timeRange: timeRange)
 				}
 				else
 				{
 					print("failed to deserialize coin \(coin)")
 				}
 
-				log.print ("getCurrency \(i)/\(coins.count)")
+				
+				return nil;
 			})
 			
 			log.print("read web for currencies")
-			return currencies
+			return currencies.compactMap({ return $0 })
 		}
 	}
 
