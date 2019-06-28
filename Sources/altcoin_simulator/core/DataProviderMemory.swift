@@ -65,8 +65,8 @@ class DataProviderMemory : DataCache
 
 	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
 	{
-		return lock.write {
-			var keyedCurrencyDatas = currencyDatas[currency.id] ?? [DataKey:CurrencyData]()
+		let keyedCurrencyDatas = lock.read { () -> [DataKey:CurrencyData] in
+			var keyedCurrencyDatas = self.currencyDatas[currency.id] ?? [DataKey:CurrencyData]()
 			
 			for data in datas
 			{
@@ -80,6 +80,10 @@ class DataProviderMemory : DataCache
 				}
 			}
 			
+			return keyedCurrencyDatas
+		}
+			
+		return lock.write {
 			currencyDatas[currency.id] = keyedCurrencyDatas
 		}
 	}

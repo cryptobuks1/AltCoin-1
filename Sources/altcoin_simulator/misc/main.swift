@@ -35,6 +35,6 @@ let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(t
 let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
 try runner.run(until: TimeEvents.safeNow)
-try memoryDataProvider.writeTo(diskDataProvider)
+//try memoryDataProvider.writeTo(diskDataProvider)
 
 //diskDataProvider.flush()

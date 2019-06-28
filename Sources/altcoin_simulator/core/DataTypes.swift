@@ -36,6 +36,12 @@ struct HistoricalValue : Hashable
 struct HistoricalValues
 {
 	var samples : [HistoricalValue]
+	
+	init (samples: [HistoricalValue])
+	{
+		self.samples = samples
+		assert(samples.isSorted({ $0.time < $1.time }))
+	}
 }
 
 typealias TimeRange = ClosedRange<Time>
@@ -43,6 +49,13 @@ typealias TimeRange = ClosedRange<Time>
 struct TimeRanges
 {
 	var ranges : [TimeRange]
+	
+	init (ranges: [TimeRange])
+	{
+		self.ranges = ranges
+		assert(ranges.isSorted({ $0.lowerBound < $1.lowerBound }))
+	}
+
 }
 
 typealias DataKey = String

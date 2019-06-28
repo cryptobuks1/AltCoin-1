@@ -38,3 +38,23 @@ extension Int
 		return nil
 	}
 }
+
+extension Array
+{
+	func isSorted (_ c : (Element, Element) -> Bool) -> Bool
+	{
+		guard !isEmpty else { return true }
+		
+		var l = first!
+		for r in dropFirst()
+		{
+			if !c(l, r)
+			{
+				return false
+			}
+			l = r
+		}
+		
+		return true
+	}
+}

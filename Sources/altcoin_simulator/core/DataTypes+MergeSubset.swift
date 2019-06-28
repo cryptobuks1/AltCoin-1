@@ -165,7 +165,7 @@ extension TimeRanges
 		}
 		
 		distinct.append(reduce)
-		return TimeRanges(ranges: distinct)
+		return TimeRanges(ranges: distinct.sorted { $0.lowerBound < $1.lowerBound })
 	}
 	
 	func merge (_ ranges: TimeRanges) -> TimeRanges
@@ -182,7 +182,7 @@ extension TimeRanges
 	func intersection(_ range: TimeRange) -> TimeRanges
 	{
 		let ranges = self.ranges.map({ return $0.intersection(range) }).compactMap({ return $0 })
-		return TimeRanges(ranges: ranges)
+		return TimeRanges(ranges: ranges.sorted { $0.lowerBound < $1.lowerBound })
 	}
 }
 
@@ -199,10 +199,38 @@ extension HistoricalValues
 		
 		return HistoricalValues(samples: unique)
 	}
+	
+	func merge_contiguous(_ rhs: HistoricalValues?) -> HistoricalValues
+	{
+		guard let rhs = rhs else { return self }
+		guard !rhs.samples.isEmpty else { return self }
+
+		let samples = notRange(rhs.timeRange!).samples + rhs.samples
+		return HistoricalValues(samples: samples)
+	}
 
 	func subRange(_ range: TimeRange) -> HistoricalValues
 	{
-		return HistoricalValues(samples: samples.filter { range.contains($0.time) })
+		let s = samples
+		let lowerBound = s.binarySearch(predicate: { $0.time <= range.lowerBound })
+		let upperBound = s.binarySearch(predicate: { $0.time <= range.upperBound })
+
+		guard lowerBound < upperBound else { return HistoricalValues(samples:[]) }
+
+		return HistoricalValues(samples: Array(s[lowerBound..<upperBound]))
+	}
+	
+	func notRange(_ range: TimeRange) -> HistoricalValues
+	{
+		let s = samples
+		let lowerBound = s.binarySearch(predicate: { $0.time <= range.lowerBound })
+		let upperBound = s.binarySearch(predicate: { $0.time < range.upperBound })
+		
+		guard lowerBound < upperBound else { return HistoricalValues(samples:[]) }
+
+		let l = s[0..<lowerBound]
+		let u = s[upperBound..<s.count]
+		return HistoricalValues(samples: Array(l + u))
 	}
 }
 
@@ -210,12 +238,24 @@ extension CurrencyData
 {
 	func merge(_ rhs : CurrencyData) -> CurrencyData?
 	{
-		return CurrencyData(
-			key: key,
-			ranges: ranges.merge(rhs.ranges),
-			values: values.merge(rhs.values),
-			wasCached: wasCached
-		)
+		if rhs.isContiguous
+		{
+			return CurrencyData(
+				key: key,
+				ranges: ranges.merge(rhs.ranges),
+				values: values.merge_contiguous(rhs.values),
+				wasCached: wasCached
+			)
+		}
+		else
+		{
+			return CurrencyData(
+				key: key,
+				ranges: ranges.merge(rhs.ranges),
+				values: values.merge(rhs.values),
+				wasCached: wasCached
+			)
+		}
 	}
 	
 	func subset(_ requestedRange: TimeRange) -> CurrencyData?
@@ -245,6 +285,24 @@ extension CurrencyData
 		}
 		
 		return TimeRange(uncheckedBounds: (l, u))
+	}
+	
+	var isContiguous : Bool {
+		let rs = ranges.ranges
+		guard !rs.isEmpty else { return true }
+		
+		var last = rs.first!
+		for r in rs.dropFirst()
+		{
+			if !last.extends(r)
+			{
+				return false
+			}
+			
+			last = r
+		}
+		
+		return true
 	}
 	
 }
