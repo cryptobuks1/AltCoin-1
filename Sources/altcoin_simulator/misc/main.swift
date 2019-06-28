@@ -14,8 +14,8 @@ let webDataProvider = DataProviderWeb()
 let diskDataProvider = try DataProviderDiskSQLite()
 let memoryDataProvider = DataProviderMemory()
 let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
-let memoryCacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
-//let memoryCacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
+//let memoryCacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
+let memoryCacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
 let dataProvider = memoryCacheProvider
 let timeProvider = TimeProviderStep(now: TimeEvents.roundDown(TimeEvents.firstBubbleStart, range: TimeQuantities.Week), stepEquation: StandardTimeEquations.nextDay)
@@ -34,5 +34,7 @@ let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(t
 
 let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
-try runner.run(until: TimeEvents.firstBubbleCrash)
+try runner.run(until: TimeEvents.safeNow)
+try memoryDataProvider.writeTo(diskDataProvider)
+
 //diskDataProvider.flush()

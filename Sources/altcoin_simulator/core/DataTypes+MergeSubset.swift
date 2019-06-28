@@ -60,7 +60,7 @@ extension TimeRange
 			result = nil
 		}
 		
-		TimeRange.log.print("intersection \(self) & \(r) -> \(result)")
+		// TimeRange.log.print("intersection \(self) & \(r) -> \(result)")
 		return result
 	}
 	
@@ -118,7 +118,7 @@ extension TimeRanges
 	{
 		let matches = ranges.filter { $0.contains(range) }
 		
-		TimeRanges.log.print("\(ranges.map{ TimeEvents.toString($0) }) && \(TimeEvents.toString(range)) \(matches.count)")
+		//TimeRanges.log.print("\(ranges.map{ TimeEvents.toString($0) }) && \(TimeEvents.toString(range)) \(matches.count)")
 		return !matches.isEmpty
 	}
 	
@@ -195,7 +195,7 @@ extension HistoricalValues
 			return $0.time < $1.time
 		}
 		
-		HistoricalValues.log.print("merged \(samples.count) + \(rhs.samples.count) -> \(unique.count)")
+		// HistoricalValues.log.print("merged \(samples.count) + \(rhs.samples.count) -> \(unique.count)")
 		
 		return HistoricalValues(samples: unique)
 	}
@@ -232,5 +232,19 @@ extension CurrencyData
 		return subset
 	}
 	
+	var enclosingTimeRange: TimeRange? {
+		guard !ranges.ranges.isEmpty else { return nil }
+		
+		var l = ranges.ranges.first!.lowerBound
+		var u = ranges.ranges.first!.upperBound
+		
+		for r in ranges.ranges
+		{
+			l = min(r.lowerBound, l)
+			u = max(r.upperBound, u)
+		}
+		
+		return TimeRange(uncheckedBounds: (l, u))
+	}
 	
 }

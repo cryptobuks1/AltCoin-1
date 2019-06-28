@@ -9,6 +9,7 @@ import Foundation
 
 class DataProviderMemory : DataCache
 {
+	let log = Log(clazz: DataProviderMemory.self)
 	let lock = ReadWriteLock()
 	
 	var currencies : [Currency]? = nil
@@ -80,6 +81,29 @@ class DataProviderMemory : DataCache
 			}
 			
 			currencyDatas[currency.id] = keyedCurrencyDatas
+		}
+	}
+	
+	func writeTo(_ sink: DataSink) throws
+	{
+		return try lock.read {
+			if let currencies = currencies
+			{
+				try sink.putCurrencies(currencies)
+				log.print("wrote currencies")
+				
+				for currency in currencies
+				{
+					if let datas = currencyDatas[currency.id]
+					{
+						for (_, data) in datas
+						{
+							try sink.putCurrencyDatas([data], for: currency, in: data.enclosingTimeRange ?? TimeRange.Zero, with: .minute)
+							log.print("wrote \(currency.id) \(data.key)")
+						}
+					}
+				}
+			}
 		}
 	}
 }

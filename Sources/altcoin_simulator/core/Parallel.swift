@@ -124,6 +124,16 @@ class ReadWriteLock
 {
 	var l = pthread_rwlock_t()
 	
+	init ()
+	{
+		pthread_rwlock_init(&l, nil)
+	}
+	
+	deinit
+	{
+		pthread_rwlock_destroy(&l)
+	}
+	
 	func read<T> (_ f: () throws -> T) throws -> T
 	{
 		pthread_rwlock_rdlock(&l)

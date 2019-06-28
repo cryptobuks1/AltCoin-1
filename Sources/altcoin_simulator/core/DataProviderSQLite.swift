@@ -129,7 +129,7 @@ class DataProviderDiskSQLite: DataCache
 
 	func putCurrencies (_ data: [Currency]) throws
 	{
-		return try lock.read {
+		return try lock.write {
 			try db.transaction {
 				try data.forEach {
 					try db.run(Currencies_.table.insert(
@@ -229,7 +229,7 @@ class DataProviderDiskSQLite: DataCache
 
 			for data in datas
 			{
-				log.print("putCurrencyDatas data \(data.key) timeRange \(TimeEvents.toString(data.ranges.ranges.first!))")
+				log.print("putCurrencyDatas data \(data.key) timeRange \(TimeEvents.toString(range))")
 				
 				let currencyData = try getCurrencyData(for: currency, key: data.key, in: range, with: resolution)
 				let merged = currencyData?.merge(data) ?? data

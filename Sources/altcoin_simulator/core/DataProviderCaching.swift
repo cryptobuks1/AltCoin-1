@@ -10,7 +10,7 @@ import Foundation
 
 class DataProviderCaching : DataProvider
 {
-	let log = Log(clazz: DataProviderCaching.self)
+	let log = LogNull(clazz: DataProviderCaching.self)
 	
 	var source: DataProvider
 	var cache: DataCache

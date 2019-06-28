@@ -9,7 +9,7 @@ import Foundation
 
 extension TimeRange
 {
-	static let log = Log(clazz: TimeRange.self)
+	static let log = LogNull(clazz: TimeRange.self)
 }
 
 extension HistoricalValues
