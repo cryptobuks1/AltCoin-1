@@ -54,7 +54,6 @@ struct CurrencyData
 	let ranges: TimeRanges
 	let values: HistoricalValues
 	
-	let cacheTime: Time
 	var wasCached = false
 }
 
@@ -117,7 +116,6 @@ extension CurrencyData : Codable
     {
     	case key
     	case values
-    	case cacheTime
     	case ranges
     }
 }

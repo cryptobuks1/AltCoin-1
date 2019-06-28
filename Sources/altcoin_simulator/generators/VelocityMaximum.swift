@@ -30,11 +30,19 @@ class TradeGeneratorVelocitiesMaximum : TradeGeneratorWithDataProviderAndTimeRan
 		
 		typealias IdToVelocity = (id: CurrencyId, velocity: Real)
 		
-		let idToVelocityQ : [IdToVelocity?] = try currencies.enumerated().map_parallel { (i, c) -> IdToVelocity? in
+		let idToVelocityQ : [IdToVelocity?] = try currencies.enumerated().map { (i, c) -> IdToVelocity? in
+
 			//log.print("\(i)/\(currencies.count)")
-			if let velocity = try? p.getCurrencyData(for: c, key: S.priceUSD, in: timeRange, with: resolution)?.values.velocity
+			do
 			{
-				return (id: c.id, velocity: velocity)
+				if let velocity = try p.getCurrencyData(for: c, key: S.priceUSD, in: timeRange, with: resolution)?.values.velocity
+				{
+					return (id: c.id, velocity: velocity)
+				}
+			}
+			catch
+			{
+				print(error)
 			}
 			
 			return nil

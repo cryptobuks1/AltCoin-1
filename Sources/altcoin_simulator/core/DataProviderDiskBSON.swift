@@ -97,8 +97,22 @@ class DataProviderDiskBSON : DataCache
 	{
 		write(fileName: S_.currenciesFileName, data: data)
 	}
+	
+	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
+	{
+		let fileName = S_.currencyFileNameTemplate
+			.replacingOccurrences(of: S_.templateId, with: currency.id)
+			.replacingOccurrences(of: S_.templateKey, with: key)
 
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
+		if let currencyData = read(fileName: fileName, type: CurrencyData.self)
+		{
+			return currencyData.ranges.intersection(range)
+		}
+		
+		return nil
+	}
+
+	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		let fileName = S_.currencyFileNameTemplate
 			.replacingOccurrences(of: S_.templateId, with: currency.id)
@@ -109,9 +123,9 @@ class DataProviderDiskBSON : DataCache
 		return currencyData
 	}
 	
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
+	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-		return [getCurrencyData(for: currency, key: key, in: range, with: resolution)].compactMap { $0 }
+		return [try getCurrencyData(for: currency, key: key, in: range, with: resolution)].compactMap { $0 }
 	}
 
 	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)

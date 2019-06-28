@@ -72,8 +72,7 @@ class DataProviderWeb : DataProvider
 		return json?.doc.withRootValueReader { coins_ -> [Currency]? in
 			guard case .array(let coins) = coins_ else { return nil }
 
-			let currencies = coins.enumerated().map_parallel({ arg -> Currency? in
-				let (i, coin_) = arg
+			let currencies = coins.map_parallel({ coin_ -> Currency? in
 				guard case .object(let coin) = coin_ else { return nil }
 				
 				if
@@ -99,6 +98,15 @@ class DataProviderWeb : DataProvider
 		}
 	}
 
+	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
+	{
+		if let subrange = currency.timeRange.intersection(range)
+		{
+			return TimeRanges(ranges: [subrange])
+		}
+		
+		return nil
+	}
 
 	func parseHistoricalValues(_ json: JSON?, _ index: String) -> HistoricalValues?
 	{
@@ -130,7 +138,6 @@ class DataProviderWeb : DataProvider
 		}
 	}
 
-
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
 		if !currency.timeRange.extends(range)
@@ -138,51 +145,66 @@ class DataProviderWeb : DataProvider
 			return []
 		}
 	
-		let roundedRange = range.round(1.0 * TimeQuantities.Week).clamped(to: 0 ... TimeEvents.safeNow )
-		log.print("getCurrencyDatas_ range \(TimeEvents.toString(range)) -> roundedRange \(TimeEvents.toString(roundedRange))")
+		let segmentLength = TimeQuantities.Week
+		let rangeSegments = Int(floor(range.lowerBound / segmentLength)) ..< Int(ceil(range.upperBound / segmentLength))
 		
-		let currencyDataURLString = S_.currencyDataURLStringTemplate
-			.replacingOccurrences(of: S_.templateId, with: currency.id)
-			.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
-			.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
+		var datas = [DataKey:CurrencyData]()
 
-		let currencyDataURL = URL(string: currencyDataURLString)!
-		let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
-		guard error == nil else { throw error! }
-		
-		var datas = [CurrencyData]()
-		let cacheTime = Date().timeIntervalSinceReferenceDate
-		
-		let parseTos = [
-			(S.markeyCapByAvailableSupply, S_.market_cap_by_available_supply),
-			(S.priceBTC, S_.price_btc),
-			(S.priceUSD, S_.price_usd),
-			(S.volumeUSD, S_.volume_usd)
-		]
-		
-		if let json = json
+		for rangeSegment in rangeSegments
 		{
-			for parseTo in parseTos
+			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
+			let roundedRange = rangeSegmentTime.clamped(to: 0 ... TimeEvents.safeNow )
+			log.print("getCurrencyDatas_ range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))")
+		
+			let currencyDataURLString = S_.currencyDataURLStringTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
+				.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
+
+			let currencyDataURL = URL(string: currencyDataURLString)!
+			let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
+			guard error == nil else { throw error! }
+		
+			let parseTos = [
+				(S.markeyCapByAvailableSupply, S_.market_cap_by_available_supply),
+				(S.priceBTC, S_.price_btc),
+				(S.priceUSD, S_.price_usd),
+				(S.volumeUSD, S_.volume_usd)
+			]
+			
+			if let json = json
 			{
-				if let values = parseHistoricalValues(json, parseTo.1)
+				for parseTo in parseTos
 				{
-					datas.append(
-						CurrencyData(
-							key: parseTo.0,
-							ranges: TimeRanges(ranges:[roundedRange]),
-							values: values,
-							cacheTime: cacheTime,
-							wasCached: wasCached
-						)
-					)
+					if let values = parseHistoricalValues(json, parseTo.1)
+					{
+						let existingData = datas[parseTo.0] ??
+							CurrencyData(
+								key: parseTo.0,
+								ranges: TimeRanges(ranges:[]),
+								values: HistoricalValues(samples: []),
+								wasCached: false
+							)
+						
+						let newData =
+							CurrencyData(
+								key: parseTo.0,
+								ranges: TimeRanges(ranges:[roundedRange]),
+								values: values,
+								wasCached: wasCached
+							)
+						
+						let mergedData = existingData.merge(newData)
+						
+						datas[parseTo.0] = mergedData
+					}
 				}
 			}
-
-			log.print("read web for \(currency.id)")
-			return datas;
 		}
 		
-		return nil
+		log.print("read web for \(currency.id)")
+		guard !datas.isEmpty else { return nil }
+		return datas.map({ return $0.value })
 	}
 	
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?

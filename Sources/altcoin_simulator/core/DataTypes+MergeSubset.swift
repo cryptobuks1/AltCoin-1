@@ -9,6 +9,8 @@ import Foundation
 
 extension TimeRange
 {
+	static let Zero = TimeRange(uncheckedBounds: (0,0))
+
 	func round(_ r : TimeInterval) -> TimeRange
 	{
 		return TimeRange(uncheckedBounds: (floor(lowerBound/r) * r, ceil(upperBound/r) * r))
@@ -29,6 +31,84 @@ extension TimeRange
 		return contains(r.lowerBound) ?
 			TimeRange(uncheckedBounds: (lowerBound, r.upperBound)) :
 			TimeRange(uncheckedBounds: (r.lowerBound, upperBound))
+	}
+	
+	func intersection(_ r: TimeRange) -> TimeRange?
+	{
+		let result : TimeRange?
+		
+		if contains(r.lowerBound) && r.lowerBound < upperBound
+		{
+			let l = r.lowerBound
+			let u = contains(r.upperBound) ? r.upperBound : upperBound
+			result = TimeRange(uncheckedBounds: (l, u))
+		}
+		else
+		if contains(r.upperBound) && lowerBound < r.upperBound
+		{
+			let u = r.upperBound
+			let l = contains(r.lowerBound) ? r.lowerBound : lowerBound
+			return TimeRange(uncheckedBounds: (l, u))
+		}
+		else
+		if r.contains(self)
+		{
+			result = self
+		}
+		else
+		{
+			result = nil
+		}
+		
+		TimeRange.log.print("intersection \(self) & \(r) -> \(result)")
+		return result
+	}
+	
+	func excluding(_ r: TimeRange) -> [TimeRange]
+	{
+		var result = [TimeRange]()
+		
+		if contains(r.lowerBound) && lowerBound < r.lowerBound
+		{
+			result.append(TimeRange(uncheckedBounds: (lowerBound, r.lowerBound)))
+		}
+
+		if contains(r.upperBound) && upperBound > r.upperBound
+		{
+			result.append(TimeRange(uncheckedBounds: (r.upperBound, upperBound)))
+		}
+
+		if result.isEmpty
+		{
+			result.append(self)
+		}
+		
+		TimeRange.log.print("excluding \(self) & \(r) -> \(result)")
+		return result
+	}
+	
+	func excluding(_ rs: [TimeRange]) -> [TimeRange]
+	{
+		var result = [self]
+		
+		for r in rs
+		{
+			var resultNext = [TimeRange]()
+			for l in result
+			{
+				resultNext.append(contentsOf: l.excluding(r))
+			}
+			
+			result = resultNext
+		}
+		
+		TimeRange.log.print("excluding \(self) & \(rs) -> \(result)")
+		return result
+	}
+	
+	func excluding(_ rs: TimeRanges) -> TimeRanges
+	{
+		return TimeRanges(ranges: excluding(rs.ranges))
 	}
 }
 
@@ -98,6 +178,12 @@ extension TimeRanges
 		
 		return timeRange
 	}
+	
+	func intersection(_ range: TimeRange) -> TimeRanges
+	{
+		let ranges = self.ranges.map({ return $0.intersection(range) }).compactMap({ return $0 })
+		return TimeRanges(ranges: ranges)
+	}
 }
 
 extension HistoricalValues
@@ -128,7 +214,6 @@ extension CurrencyData
 			key: key,
 			ranges: ranges.merge(rhs.ranges),
 			values: values.merge(rhs.values),
-			cacheTime: cacheTime,
 			wasCached: wasCached
 		)
 	}
@@ -141,7 +226,6 @@ extension CurrencyData
 			key: key,
 			ranges: TimeRanges(ranges:[requestedRange]),
 			values: values.subRange(requestedRange),
-			cacheTime: cacheTime,
 			wasCached: wasCached
 		)
 		

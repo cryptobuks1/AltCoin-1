@@ -119,3 +119,40 @@ extension Array
 	}
 
 }
+
+class ReadWriteLock
+{
+	var l = pthread_rwlock_t()
+	
+	func read<T> (_ f: () throws -> T) throws -> T
+	{
+		pthread_rwlock_rdlock(&l)
+		defer { pthread_rwlock_unlock(&l) }
+		
+		return try f()
+	}
+
+	func write<T> (_ f: () throws -> T) throws -> T
+	{
+		pthread_rwlock_wrlock(&l)
+		defer { pthread_rwlock_unlock(&l) }
+		
+		return try f()
+	}
+
+	func read<T> (_ f: () -> T) -> T
+	{
+		pthread_rwlock_rdlock(&l)
+		defer { pthread_rwlock_unlock(&l) }
+		
+		return try f()
+	}
+
+	func write<T> (_ f: () -> T) -> T
+	{
+		pthread_rwlock_wrlock(&l)
+		defer { pthread_rwlock_unlock(&l) }
+		
+		return try f()
+	}
+}

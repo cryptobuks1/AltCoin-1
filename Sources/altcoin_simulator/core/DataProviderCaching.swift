@@ -10,6 +10,8 @@ import Foundation
 
 class DataProviderCaching : DataProvider
 {
+	let log = Log(clazz: DataProviderCaching.self)
+	
 	var source: DataProvider
 	var cache: DataCache
 	
@@ -42,13 +44,24 @@ class DataProviderCaching : DataProvider
 			return data
 		}
 		
-		if let datas = try source.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
+		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: range) ?? TimeRanges(ranges: [])
+		let requiredRanges = range.excluding(cachedTimeRanges)
+		log.print("range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)")
+
+		for requiredRange in requiredRanges.ranges
 		{
-			try cache.putCurrencyDatas(datas, for: currency, in: range, with: resolution)
-			return try cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
+			if let datas = try source.getCurrencyDatas(for: currency, key: key, in: requiredRange, with: resolution)
+			{
+				try cache.putCurrencyDatas(datas, for: currency, in: requiredRange, with: resolution)
+			}
 		}
-		
-		return nil
+
+		return try cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
+	}
+	
+	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
+	{
+		return try source.getCurrencyRanges(for: currency, key: key, in: range)
 	}
 	
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
@@ -58,12 +71,18 @@ class DataProviderCaching : DataProvider
 			return datas
 		}
 		
-		if let datas = try source.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
+		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: range) ?? TimeRanges(ranges: [])
+		let requiredRanges = range.excluding(cachedTimeRanges)
+		log.print("range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)")
+
+		for requiredRange in requiredRanges.ranges
 		{
-			try cache.putCurrencyDatas(datas, for: currency, in: range, with: resolution)
-			return datas
+			if let datas = try source.getCurrencyDatas(for: currency, key: key, in: requiredRange, with: resolution)
+			{
+				try cache.putCurrencyDatas(datas, for: currency, in: requiredRange, with: resolution)
+				return datas
+			}
 		}
-		
 		return nil
 	}
 }

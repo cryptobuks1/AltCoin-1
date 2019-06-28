@@ -10,6 +10,7 @@ import Foundation
 
 class DataProviderDiskJSON : DataCache
 {
+	let lock = ReadWriteLock()
 	let log = Log(clazz: DataProviderDiskJSON.self)
 	
 	class S_ {
@@ -56,139 +57,170 @@ class DataProviderDiskJSON : DataCache
 	
 	func read<T> (fileName: String, type: T.Type) -> T? where T: Decodable
 	{
-		if let fileURL = getFileUrlFor(fileName)
-		{
-			do
+		return lock.read {
+			if let fileURL = getFileUrlFor(fileName)
 			{
-				return try autoreleasepool { () -> T in
-					let data = try Data(contentsOf: fileURL)
-					let decoder = JSONDecoder()
-					let decoded = try decoder.decode(type, from: data)
-					
-					log.print("read cache for \(fileName)")
-					return decoded
+				do
+				{
+					return try autoreleasepool { () -> T in
+						let data = try Data(contentsOf: fileURL)
+						let decoder = JSONDecoder()
+						let decoded = try decoder.decode(type, from: data)
+						
+						log.print("read cache for \(fileName)")
+						return decoded
+					}
+				}
+				catch
+				{
+					// file probably didn't exist, we skip error for now
 				}
 			}
-			catch
-			{
-				// file probably didn't exist, we skip error for now
-			}
+			
+			return nil
 		}
-		
-		return nil
 	}
 
 	func write<T> (fileName: String, data: T) where T: Encodable
 	{
-		if let fileURL = getFileUrlFor(fileName)
-		{
-			do
+		lock.write {
+			if let fileURL = getFileUrlFor(fileName)
 			{
-				try autoreleasepool {
-					let encoder = JSONEncoder()
-					if let encoded = try? encoder.encode(data)
-					{
-						try encoded.write(to: fileURL, options: .atomic)
-						log.print("wrote cache for \(fileName)")
+				do
+				{
+					try autoreleasepool {
+						let encoder = JSONEncoder()
+						if let encoded = try? encoder.encode(data)
+						{
+							try encoded.write(to: fileURL, options: .atomic)
+							log.print("wrote cache for \(fileName)")
+						}
 					}
 				}
-			}
-			catch
-			{
-				print(error)
+				catch
+				{
+					print(error)
+				}
 			}
 		}
 	}
 	
 	func getCurrencies () -> [Currency]?
 	{
-		return read(fileName: S_.currenciesFileName, type: Array<Currency>.self)
+		return lock.read {
+			return read(fileName: S_.currenciesFileName, type: Array<Currency>.self)
+		}
 	}
 
 	func putCurrencies (_ data: [Currency])
 	{
-		write(fileName: S_.currenciesFileName, data: data)
-	}
-	
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
-	{
-		let fileName = S_.currencyFileNameTemplate
-			.replacingOccurrences(of: S_.templateId, with: currency.id)
-			.replacingOccurrences(of: S_.templateKey, with: key)
-
-		if let cached = fileDatas[fileName]
-		{
-			return cached.subset(range)
+		lock.write {
+			write(fileName: S_.currenciesFileName, data: data)
 		}
-	
-		var currencyData = read(fileName: fileName, type: CurrencyData.self)
-		currencyData?.wasCached = true
-		
-		return currencyData?.subset(range)
 	}
 	
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
+	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
-		let fileName = S_.currencyFileNameTemplate
-			.replacingOccurrences(of: S_.templateId, with: currency.id)
-			.replacingOccurrences(of: S_.templateKey, with: key)
+			return lock.read {
+			let fileName = S_.currencyFileNameTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateKey, with: key)
 
-		let cached = fileDatas[fileName]
-		if var currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
-		{
-			fileDatas[fileName] = currencyData
-			currencyData.wasCached = true
-
-			if currencyData.ranges.contains(range)
+			if let cached = fileDatas[fileName]
 			{
-				return [currencyData]
+				return cached.subset(range)
 			}
-		}
 		
-		return nil
+			var currencyData = read(fileName: fileName, type: CurrencyData.self)
+			currencyData?.wasCached = true
+			
+			return currencyData?.subset(range)
+		}
+	}
+	
+	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
+	{
+			return lock.read {
+			let fileName = S_.currencyFileNameTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateKey, with: key)
+
+			let cached = fileDatas[fileName]
+			if var currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
+			{
+				return currencyData.ranges.intersection(range)
+			}
+			
+			return nil
+		}
+	}
+	
+
+	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	{
+			return lock.read {
+			let fileName = S_.currencyFileNameTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateKey, with: key)
+
+			let cached = fileDatas[fileName]
+			if var currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
+			{
+				fileDatas[fileName] = currencyData
+				currencyData.wasCached = true
+
+				if currencyData.ranges.contains(range)
+				{
+					return [currencyData]
+				}
+			}
+			
+			return nil
+		}
 	}
 	
 	var putCurrencyCount = 0
 	
-	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
+	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
 	{
-		objc_sync_enter(self)
-    	defer { objc_sync_exit(self) }
-
-		for data in datas
-		{
-			print("putCurrencyDatas data \(data.key) timeRange \(TimeEvents.toString(data.ranges.ranges.first!))")
-			
-			let fileName = S_.currencyFileNameTemplate
-				.replacingOccurrences(of: S_.templateId, with: currency.id)
-				.replacingOccurrences(of: S_.templateKey, with: data.key)
-
-			let cached = fileDatas[fileName]
-			if let currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
+		return lock.write {
+			for data in datas
 			{
-				var merged = currencyData.merge(data)
-				merged?.wasCached = true
+				print("putCurrencyDatas data \(data.key) timeRange \(TimeEvents.toString(data.ranges.ranges.first!))")
 				
-				fileDatas[fileName] = merged
+				let fileName = S_.currencyFileNameTemplate
+					.replacingOccurrences(of: S_.templateId, with: currency.id)
+					.replacingOccurrences(of: S_.templateKey, with: data.key)
+
+				let cached = fileDatas[fileName]
+				if let currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
+				{
+					var merged = currencyData.merge(data)
+					merged?.wasCached = true
+					
+					fileDatas[fileName] = merged
+				}
+				else
+				{
+					fileDatas[fileName] = data
+				}
 			}
-			else
+			
+			putCurrencyCount += 1
+			if putCurrencyCount % 10 == 0
 			{
-				fileDatas[fileName] = data
+				flush()
 			}
-		}
-		
-		putCurrencyCount += 1
-		if putCurrencyCount % 10 == 0
-		{
-			flush()
 		}
 	}
 	
 	func flush ()
 	{
-		for fileData in fileDatas
-		{
-			write(fileName: fileData.key, data: fileData.value)
+		lock.write {
+			for fileData in fileDatas
+			{
+				write(fileName: fileData.key, data: fileData.value)
+			}
 		}
 	}
 }
