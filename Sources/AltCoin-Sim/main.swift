@@ -7,11 +7,12 @@
 //
 
 import Foundation
-
-func no ()
+import AltCoin
 
 //JSONURLSessionManager.shared.addProxies(ProxyFinder.shared.proxies)
 
+func main(_ args: [String]) throws -> Int
+{
 let webDataProvider = DataProviderWeb()
 let diskDataProvider = try DataProviderDiskSQLite()
 let memoryDataProvider = DataProviderMemory()
@@ -40,4 +41,6 @@ try runner.run(until: TimeEvents.firstBubbleStart + 4.0 * TimeQuantities.Week)
 try memoryDataProvider.writeTo(diskDataProvider)
 
 //diskDataProvider.flush()
+
+return 0
 }
