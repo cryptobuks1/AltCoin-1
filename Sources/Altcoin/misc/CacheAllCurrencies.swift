@@ -16,6 +16,7 @@ func cacheAllCurrencies () throws
 	{
 //			let selected = ["bitcoin", "litecoin", "chainlink"]
 //			currencies = currencies.filter { return selected.contains($0.id) }
+		var currencies = currencies.currencies
 		currencies.sort { return $0.rank < $1.rank }
 		currencies = currencies.filter { return $0.rank < 4 }
 	

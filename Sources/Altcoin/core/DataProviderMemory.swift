@@ -12,7 +12,7 @@ class DataProviderMemory : DataCache
 	let log = Log(clazz: DataProviderMemory.self)
 	let lock = ReadWriteLock()
 	
-	var currencies : [Currency]? = nil
+	var currencies : CurrencySet? = nil
 	typealias KeyedCurrencyData = [DataKey:CurrencyData]
 	var currencyDatas = [CurrencyId:KeyedCurrencyData]()
 
@@ -20,14 +20,14 @@ class DataProviderMemory : DataCache
 	{
 	}
 
-	func getCurrencies () -> [Currency]?
+	func getCurrencies () -> CurrencySet?
 	{
 		return lock.read {
 			return currencies
 		}
 	}
 	
-	func putCurrencies (_ data: [Currency])
+	func putCurrencies (_ data: CurrencySet)
 	{
 		return lock.write {
 			currencies = data
@@ -96,7 +96,7 @@ class DataProviderMemory : DataCache
 				try sink.putCurrencies(currencies)
 				log.print("wrote currencies")
 				
-				for currency in currencies
+				for currency in currencies.currencies
 				{
 					if let datas = currencyDatas[currency.id]
 					{

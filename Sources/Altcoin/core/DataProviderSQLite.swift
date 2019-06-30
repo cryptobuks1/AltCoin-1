@@ -110,7 +110,7 @@ class DataProviderDiskSQLite: DataCache
 	}
 	
 
-	func getCurrencies () throws -> [Currency]?
+	func getCurrencies () throws -> CurrencySet?
 	{
 		return try lock.read {
 			let result = try db.prepare(Currencies_.table).map {
@@ -123,15 +123,20 @@ class DataProviderDiskSQLite: DataCache
 				)
 			}
 			
-			return result.isEmpty ? nil : result
+			return result.isEmpty ? nil : CurrencySet(currencies: result)
 		}
 	}
 
-	func putCurrencies (_ data: [Currency]) throws
+	func putCurrencies (_ data: CurrencySet) throws
 	{
 		return try lock.write {
+			// should be upsert, not delete & insert
+			try db.run(
+				Currencies_.table.delete()
+			)
+		
 			try db.transaction {
-				try data.forEach {
+				try data.currencies.forEach {
 					try db.run(Currencies_.table.insert(
 						Currencies_.id <- $0.id,
 						Currencies_.name <- $0.name,

@@ -10,7 +10,7 @@ import Foundation
 
 protocol DataProvider
 {
-	func getCurrencies () throws -> [Currency]?
+	func getCurrencies () throws -> CurrencySet?
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	func getCurrencyRanges (for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
 	
@@ -20,7 +20,7 @@ protocol DataProvider
 
 protocol DataSink
 {
-	func putCurrencies (_ currencies: [Currency]) throws
+	func putCurrencies (_ currencies: CurrencySet) throws
 	func putCurrencyDatas (_ data: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
 }
 

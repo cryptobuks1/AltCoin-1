@@ -205,8 +205,9 @@ extension HistoricalValues
 		guard let rhs = rhs else { return self }
 		guard !rhs.samples.isEmpty else { return self }
 
-		let samples = notRange(rhs.timeRange!).samples + rhs.samples
-		return HistoricalValues(samples: samples)
+		let lhsSamples = notRange(rhs.timeRange!).samples
+		let samples = lhsSamples + rhs.samples
+		return HistoricalValues(samples: samples.sorted { return $0.time < $1.time })
 	}
 
 	func subRange(_ range: TimeRange) -> HistoricalValues

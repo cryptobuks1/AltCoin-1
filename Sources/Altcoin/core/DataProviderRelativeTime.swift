@@ -9,7 +9,7 @@ import Foundation
 
 protocol RelativeDataProvider : TimeProvider
 {
-	func getCurrencies () throws -> [Currency]?
+	func getCurrencies () throws -> CurrencySet?
 	func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) throws -> CurrencyData? 
 }
 
@@ -30,7 +30,7 @@ class RelativeDataProviderConcrete : RelativeDataProvider
 		return timeProvider.now
 	}
 
-	func getCurrencies () throws -> [Currency]?
+	func getCurrencies () throws -> CurrencySet?
 	{
 		return try dataProvider.getCurrencies()
 	}

@@ -21,7 +21,7 @@ class DataProviderCaching : DataProvider
 		self.cache = cache
 	}
 	
-	func getCurrencies () throws -> [Currency]?
+	func getCurrencies () throws -> CurrencySet?
 	{
 		if let data = try cache.getCurrencies()
 		{

@@ -1,8 +1,17 @@
+//
+//  MergeSubsetTests.swift
+//  altcoin_simulatorTests
+//
+//  Created by Timothy Prepscius on 6/30/19.
+//
+
 import XCTest
 import class Foundation.Bundle
+import Altcoin
 
-final class altcoin_simulatorTests: XCTestCase {
-    func testExample() throws {
+final class subsetTest: XCTestCase {
+    func subset1() throws {
+    	let v = HistoricalValues(samples: [])
         // This is an example of a functional test case.
         // Use XCTAssert and related functions to verify your tests produce the correct
         // results.
@@ -42,6 +51,6 @@ final class altcoin_simulatorTests: XCTestCase {
     }
 
     static var allTests = [
-        ("testExample", testExample),
+        ("subset1", subset1),
     ]
 }

@@ -64,12 +64,12 @@ class DataProviderWeb : DataProvider
 		return nil
 	}
 	
-	func getCurrencies () throws -> [Currency]?
+	func getCurrencies () throws -> CurrencySet?
 	{
 		let currenciesURL = URL(string: S_.currenciesURLString)!
 		let (json, _, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currenciesURL, useCache: false)
 
-		return json?.doc.withRootValueReader { coins_ -> [Currency]? in
+		return json?.doc.withRootValueReader { coins_ -> CurrencySet? in
 			guard case .array(let coins) = coins_ else { return nil }
 
 			let currencies = coins.map_parallel({ coin_ -> Currency? in
@@ -94,7 +94,8 @@ class DataProviderWeb : DataProvider
 			})
 			
 			log.print("read web for currencies")
-			return currencies.compactMap({ return $0 })
+			
+			return CurrencySet(currencies: currencies.compactMap({ $0 }))
 		}
 	}
 

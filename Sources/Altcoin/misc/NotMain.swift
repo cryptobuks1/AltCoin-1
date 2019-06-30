@@ -8,6 +8,8 @@
 
 import Foundation
 
+func no ()
+
 //JSONURLSessionManager.shared.addProxies(ProxyFinder.shared.proxies)
 
 let webDataProvider = DataProviderWeb()
@@ -34,7 +36,8 @@ let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(t
 
 let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
-try runner.run(until: TimeEvents.safeNow)
-//try memoryDataProvider.writeTo(diskDataProvider)
+try runner.run(until: TimeEvents.firstBubbleStart + 4.0 * TimeQuantities.Week)
+try memoryDataProvider.writeTo(diskDataProvider)
 
 //diskDataProvider.flush()
+}

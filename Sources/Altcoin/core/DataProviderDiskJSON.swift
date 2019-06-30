@@ -105,14 +105,14 @@ class DataProviderDiskJSON : DataCache
 		}
 	}
 	
-	func getCurrencies () -> [Currency]?
+	func getCurrencies () -> CurrencySet?
 	{
 		return lock.read {
-			return read(fileName: S_.currenciesFileName, type: Array<Currency>.self)
+			return read(fileName: S_.currenciesFileName, type: CurrencySet.self)
 		}
 	}
 
-	func putCurrencies (_ data: [Currency])
+	func putCurrencies (_ data: CurrencySet)
 	{
 		lock.write {
 			write(fileName: S_.currenciesFileName, data: data)
@@ -146,7 +146,7 @@ class DataProviderDiskJSON : DataCache
 				.replacingOccurrences(of: S_.templateKey, with: key)
 
 			let cached = fileDatas[fileName]
-			if var currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
+			if let currencyData = cached ?? read(fileName: fileName, type: CurrencyData.self)
 			{
 				return currencyData.ranges.intersection(range)
 			}

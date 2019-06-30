@@ -8,17 +8,17 @@
 
 import Foundation
 
-enum Resolution {
+public enum Resolution {
 	case minute
 	case hour
 	case day
 }
 
-typealias Real = Double
-typealias Time = Double
-typealias CurrencyId = String
+public typealias Real = Double
+public typealias Time = Double
+public typealias CurrencyId = String
 
-struct Currency
+public struct Currency
 {
 	let id: CurrencyId
 	let name: String
@@ -27,26 +27,37 @@ struct Currency
 	let timeRange: TimeRange
 }
 
-struct HistoricalValue : Hashable
+public struct CurrencySet
 {
-	let time: Time
-	let value: Real
+	var currencies : [Currency]
+	
+	init (currencies: [Currency])
+	{
+		self.currencies = currencies
+		assert(!currencies.hasDuplicates({ $0.id }))
+	}
 }
 
-struct HistoricalValues
+public struct HistoricalValue : Hashable
 {
-	var samples : [HistoricalValue]
+	public let time: Time
+	public let value: Real
+}
+
+public struct HistoricalValues
+{
+	public var samples : [HistoricalValue]
 	
-	init (samples: [HistoricalValue])
+	public init (samples: [HistoricalValue])
 	{
 		self.samples = samples
 		assert(samples.isSorted({ $0.time < $1.time }))
 	}
 }
 
-typealias TimeRange = ClosedRange<Time>
+public typealias TimeRange = ClosedRange<Time>
 
-struct TimeRanges
+public struct TimeRanges
 {
 	var ranges : [TimeRange]
 	
@@ -58,9 +69,9 @@ struct TimeRanges
 
 }
 
-typealias DataKey = String
+public typealias DataKey = String
 
-struct CurrencyData
+public struct CurrencyData
 {
 	let key: DataKey
 
@@ -70,7 +81,7 @@ struct CurrencyData
 	var wasCached = false
 }
 
-struct Trade
+public struct Trade
 {
 	let from, to: CurrencyId;
 	let amount: Double
@@ -78,7 +89,7 @@ struct Trade
 	let time: Time
 }
 
-struct TradeBook
+public struct TradeBook
 {
 	var trades: [Trade]
 }
@@ -95,6 +106,14 @@ extension Currency : Codable
     	case rank
     	case tokens
     	case timeRange
+    }
+}
+
+extension CurrencySet : Codable
+{
+    enum CodingKeys : String, CodingKey
+    {
+    	case currencies
     }
 }
 

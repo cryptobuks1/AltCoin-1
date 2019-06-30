@@ -1,7 +1,7 @@
 import XCTest
 
-import altcoin_simulatorTests
+import AltcoinTests
 
 var tests = [XCTestCaseEntry]()
-tests += altcoin_simulatorTests.allTests()
+tests += AltcoinTests.allTests()
 XCTMain(tests)

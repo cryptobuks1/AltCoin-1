@@ -4,7 +4,13 @@
 import PackageDescription
 
 let package = Package(
-    name: "altcoin_simulator",
+    name: "Altcoin",
+    products: [
+        // Products define the executables and libraries produced by a package, and make them visible to other packages.
+        .library(
+            name: "Altcoin",
+            targets: ["Altcoin"]),
+    ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
         // .package(url: /* package url */, from: "1.0.0"),
@@ -13,16 +19,15 @@ let package = Package(
 		.package(url: "https://github.com/scinfu/SwiftSoup.git", from: "1.7.4"),
 		.package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.12.0"),
 		.package(url: "https://github.com/timprepscius/sajson_swift.git", .branch("master"))
-    ],
+	],
     targets: [
         // Targets are the basic building blocks of a package. A target can define a module or a test suite.
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
-            name: "altcoin_simulator",
-            dependencies: ["BSON", "SigmaSwiftStatistics", "SwiftSoup", "SQLite", "sajson_swift"]
-	),
+            name: "Altcoin",
+            dependencies: ["BSON", "SigmaSwiftStatistics", "SwiftSoup", "SQLite", "sajson_swift"]),
         .testTarget(
-            name: "altcoin_simulatorTests",
-            dependencies: ["altcoin_simulator"]),
+            name: "AltcoinTests",
+            dependencies: ["Altcoin"]),
     ]
 )

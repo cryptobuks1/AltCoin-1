@@ -88,12 +88,12 @@ class DataProviderDiskBSON : DataCache
 		}
 	}
 	
-	func getCurrencies () -> [Currency]?
+	func getCurrencies () -> CurrencySet?
 	{
-		return read(fileName: S_.currenciesFileName, type: Array<Currency>.self)
+		return read(fileName: S_.currenciesFileName, type: CurrencySet.self)
 	}
 
-	func putCurrencies (_ data: [Currency])
+	func putCurrencies (_ data: CurrencySet)
 	{
 		write(fileName: S_.currenciesFileName, data: data)
 	}
