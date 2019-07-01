@@ -9,7 +9,7 @@
 import Foundation
 import BSON
 
-class DataProviderDiskBSON : DataCache
+public class DataProviderDiskBSON : DataCache
 {
 	class S_ {
 		static let
@@ -21,7 +21,7 @@ class DataProviderDiskBSON : DataCache
 		
 	}
 
-	init() throws
+	public init() throws
 	{
 		if let dataFolder = getDataFolderUrl()
 		{
@@ -88,17 +88,17 @@ class DataProviderDiskBSON : DataCache
 		}
 	}
 	
-	func getCurrencies () -> CurrencySet?
+	public func getCurrencies () -> CurrencySet?
 	{
 		return read(fileName: S_.currenciesFileName, type: CurrencySet.self)
 	}
 
-	func putCurrencies (_ data: CurrencySet)
+	public func putCurrencies (_ data: CurrencySet)
 	{
 		write(fileName: S_.currenciesFileName, data: data)
 	}
 	
-	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
+	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
 	{
 		let fileName = S_.currencyFileNameTemplate
 			.replacingOccurrences(of: S_.templateId, with: currency.id)
@@ -112,7 +112,7 @@ class DataProviderDiskBSON : DataCache
 		return nil
 	}
 
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		let fileName = S_.currencyFileNameTemplate
 			.replacingOccurrences(of: S_.templateId, with: currency.id)
@@ -123,12 +123,12 @@ class DataProviderDiskBSON : DataCache
 		return currencyData
 	}
 	
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
 		return [try getCurrencyData(for: currency, key: key, in: range, with: resolution)].compactMap { $0 }
 	}
 
-	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
+	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
 	{
 		for data in datas
 		{

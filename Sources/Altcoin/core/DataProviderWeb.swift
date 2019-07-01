@@ -9,7 +9,7 @@
 import Foundation
 import sajson_swift
 
-class DataProviderWeb : DataProvider
+public class DataProviderWeb : DataProvider
 {
 	let log = Log(clazz: DataProviderWeb.self)
 	let logDetail = LogNull(clazz: DataProviderWeb.self)
@@ -35,12 +35,12 @@ class DataProviderWeb : DataProvider
 			market_cap_by_available_supply = "market_cap_by_available_supply"
 	}
 
-	init ()
+	public init ()
 	{
 	}
 	
 	
-	func getCurrencyDataRange(for id: String) throws -> TimeRange?
+	public func getCurrencyDataRange(for id: String) throws -> TimeRange?
 	{
 		let currencyDataRangeURLString = S_.currencyDataRangeURLStringTemplate
 			.replacingOccurrences(of: S_.templateId, with: id)
@@ -64,7 +64,7 @@ class DataProviderWeb : DataProvider
 		return nil
 	}
 	
-	func getCurrencies () throws -> CurrencySet?
+	public func getCurrencies () throws -> CurrencySet?
 	{
 		let currenciesURL = URL(string: S_.currenciesURLString)!
 		let (json, _, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currenciesURL, useCache: false)
@@ -99,7 +99,7 @@ class DataProviderWeb : DataProvider
 		}
 	}
 
-	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
+	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
 	{
 		if let subrange = currency.timeRange.intersection(range)
 		{
@@ -139,7 +139,7 @@ class DataProviderWeb : DataProvider
 		}
 	}
 
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
 		if !currency.timeRange.extends(range)
 		{
@@ -208,7 +208,7 @@ class DataProviderWeb : DataProvider
 		return datas.map({ return $0.value })
 	}
 	
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		let datas = try getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
 		return datas?.filter { $0.key == key }.first

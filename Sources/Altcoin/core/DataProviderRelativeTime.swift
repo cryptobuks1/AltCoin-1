@@ -7,35 +7,35 @@
 
 import Foundation
 
-protocol RelativeDataProvider : TimeProvider
+public protocol RelativeDataProvider : TimeProvider
 {
 	func getCurrencies () throws -> CurrencySet?
 	func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) throws -> CurrencyData? 
 }
 
-class RelativeDataProviderConcrete : RelativeDataProvider
+public class RelativeDataProviderConcrete : RelativeDataProvider
 {
 	static let log = LogNull(clazz: RelativeDataProviderConcrete.self)
 	
 	let dataProvider : DataProvider
 	let timeProvider : TimeProvider
 	
-	init (dataProvider : DataProvider, timeProvider: TimeProvider)
+	public init (dataProvider : DataProvider, timeProvider: TimeProvider)
 	{
 		self.dataProvider = dataProvider
 		self.timeProvider = timeProvider
 	}
 
-	var now : Time {
+	public var now : Time {
 		return timeProvider.now
 	}
 
-	func getCurrencies () throws -> CurrencySet?
+	public func getCurrencies () throws -> CurrencySet?
 	{
 		return try dataProvider.getCurrencies()
 	}
 	
-	func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	public func getCurrencyData (for currency: Currency, key: DataKey, in relativeRange: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		let now = timeProvider.now
 		

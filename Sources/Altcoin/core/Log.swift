@@ -7,7 +7,7 @@
 
 import Foundation
 
-class LogAlloc
+public class LogAlloc
 {
 	static func destruct (_ out : Any)
 	{
@@ -25,7 +25,7 @@ class LogAlloc
 }
 
 
-class Log
+public class Log
 {
 	let title : String
 	
@@ -47,7 +47,7 @@ class Log
 	func print(_ v: Any) { Swift.print("\(title): \(v)") }
 }
 
-class LogNull
+public class LogNull
 {
 	init (instance: Any)
 	{

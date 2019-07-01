@@ -59,9 +59,9 @@ public typealias TimeRange = ClosedRange<Time>
 
 public struct TimeRanges
 {
-	var ranges : [TimeRange]
+	public var ranges : [TimeRange]
 	
-	init (ranges: [TimeRange])
+	public init (ranges: [TimeRange])
 	{
 		self.ranges = ranges
 		assert(ranges.isSorted({ $0.lowerBound < $1.lowerBound }))
@@ -73,25 +73,30 @@ public typealias DataKey = String
 
 public struct CurrencyData
 {
-	let key: DataKey
+	public let key: DataKey
 
-	let ranges: TimeRanges
-	let values: HistoricalValues
+	public let ranges: TimeRanges
+	public let values: HistoricalValues
 	
-	var wasCached = false
+	public var wasCached = false
 }
 
 public struct Trade
 {
-	let from, to: CurrencyId;
-	let amount: Double
-	let rate: Double
-	let time: Time
+	public let from, to: CurrencyId;
+	public let amount: Double
+	public let rate: Double
+	public let time: Time
 }
 
 public struct TradeBook
 {
-	var trades: [Trade]
+	public var trades: [Trade]
+	
+	public init (trades: [Trade])
+	{
+		self.trades = trades
+	}
 }
 
 // -------

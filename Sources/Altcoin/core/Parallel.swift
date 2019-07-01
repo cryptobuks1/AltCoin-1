@@ -8,15 +8,15 @@
 import Foundation
 
 
-func synchronized<T>(_ lock: AnyObject, _ body: () throws -> T) rethrows -> T {
+public func synchronized<T>(_ lock: AnyObject, _ body: () throws -> T) rethrows -> T {
     objc_sync_enter(lock)
     defer { objc_sync_exit(lock) }
     return try body()
 }
 
-typealias RepeatWithInterval = DispatchSourceTimer
+public typealias RepeatWithInterval = DispatchSourceTimer
 
-func repeatWithInterval (_ interval: TimeInterval, _ block: @escaping () -> ()) -> RepeatWithInterval
+public func repeatWithInterval (_ interval: TimeInterval, _ block: @escaping () -> ()) -> RepeatWithInterval
 {
 	let source = DispatchSource.makeTimerSource()
 	source.schedule(deadline: .now() + interval, repeating: interval)
@@ -26,23 +26,23 @@ func repeatWithInterval (_ interval: TimeInterval, _ block: @escaping () -> ()) 
 	return source
 }
 
-func cancelRepeatWithInterval (_ r: RepeatWithInterval)
+public func cancelRepeatWithInterval (_ r: RepeatWithInterval)
 {
 	r.cancel()
 }
 
-class ThreadShared<T> {
-	typealias Generator = ()->T
+public class ThreadShared<T> {
+	public typealias Generator = ()->T
 	
 	var values: [Thread:T] = [:]
 	let generator : Generator
 	
-	init(_ generator: @escaping Generator)
+	public init(_ generator: @escaping Generator)
 	{
 		self.generator = generator
 	}
 	
-	var v : T
+	public var v : T
 	{
 		if let c = values[Thread.current]
 		{
@@ -60,7 +60,7 @@ class ThreadShared<T> {
 
 extension Sequence
 {
-	var count_slow : Int {
+	public var count_slow : Int {
 		var i = 0
 		for _ in self
 		{
@@ -70,7 +70,7 @@ extension Sequence
 		return i
 	}
 	
-	func index_slow(_ z: Int) -> Element?
+	public func index_slow(_ z: Int) -> Element?
 	{
 		var i = z
 		for v in self
@@ -85,13 +85,13 @@ extension Sequence
 		return nil
 	}
 
-	func forEach_parallel(_ f: (_ t: Element) ->()) {
+	public func forEach_parallel(_ f: (_ t: Element) ->()) {
 		DispatchQueue.concurrentPerform(iterations: self.count_slow) { (index) in
 			f(self.index_slow(index)!)
 		}
 	}
 
-	func map_parallel<T>(_ f: (_ t: Element) -> T) -> [T] {
+	public func map_parallel<T>(_ f: (_ t: Element) -> T) -> [T] {
 		var a = [T]()
 		let lock = NSLock()
 		
@@ -107,24 +107,24 @@ extension Sequence
 	}
 }
 
-extension Array
+public extension Array
 {
-	var count_slow : Int {
+	public var count_slow : Int {
 		return self.count
 	}
 	
-	func index_slow(_ i: Int) -> Element?
+	public func index_slow(_ i: Int) -> Element?
 	{
 		return self[i]
 	}
 
 }
 
-class ReadWriteLock
+public class ReadWriteLock
 {
 	var l = pthread_rwlock_t()
 	
-	init ()
+	public init ()
 	{
 		pthread_rwlock_init(&l, nil)
 	}
@@ -134,7 +134,7 @@ class ReadWriteLock
 		pthread_rwlock_destroy(&l)
 	}
 	
-	func read<T> (_ f: () throws -> T) throws -> T
+	public func read<T> (_ f: () throws -> T) throws -> T
 	{
 		pthread_rwlock_rdlock(&l)
 		defer { pthread_rwlock_unlock(&l) }
@@ -142,7 +142,7 @@ class ReadWriteLock
 		return try f()
 	}
 
-	func write<T> (_ f: () throws -> T) throws -> T
+	public func write<T> (_ f: () throws -> T) throws -> T
 	{
 		pthread_rwlock_wrlock(&l)
 		defer { pthread_rwlock_unlock(&l) }
@@ -150,19 +150,19 @@ class ReadWriteLock
 		return try f()
 	}
 
-	func read<T> (_ f: () -> T) -> T
+	public func read<T> (_ f: () -> T) -> T
 	{
 		pthread_rwlock_rdlock(&l)
 		defer { pthread_rwlock_unlock(&l) }
 		
-		return try f()
+		return f()
 	}
 
-	func write<T> (_ f: () -> T) -> T
+	public func write<T> (_ f: () -> T) -> T
 	{
 		pthread_rwlock_wrlock(&l)
 		defer { pthread_rwlock_unlock(&l) }
 		
-		return try f()
+		return f()
 	}
 }

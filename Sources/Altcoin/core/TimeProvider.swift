@@ -7,27 +7,27 @@
 
 import Foundation
 
-protocol TimeProvider
+public protocol TimeProvider
 {
 	var now : Time { get }
 }
 
-class TimeProviderStep : TimeProvider
+public class TimeProviderStep : TimeProvider
 {
 	var now_ : Time
 	let stepEquation : Equation_P1_R1;
 	
-	init (now: Time, stepEquation : @escaping Equation_P1_R1)
+	public init (now: Time, stepEquation : @escaping Equation_P1_R1)
 	{
 		self.now_ = now
 		self.stepEquation = stepEquation
 	}
 	
-	var now: Time {
+	public var now: Time {
 		return now_
 	}
 	
-	func step ()
+	public func step ()
 	{
 		now_ = stepEquation(now_)
 	}

@@ -8,18 +8,18 @@
 import Foundation
 import SigmaSwiftStatistics
 
-class Simulator
+public class Simulator
 {
 	let tradeGenerator : TradeGenerator
 	var tradeBook : TradeBook
 
-	init (tradeGenerator: TradeGenerator, tradeBook: TradeBook)
+	public init (tradeGenerator: TradeGenerator, tradeBook: TradeBook)
 	{
 		self.tradeGenerator = tradeGenerator
 		self.tradeBook = tradeBook
 	}
 	
-	func execute () throws
+	public func execute () throws
 	{
 		if let trades = try tradeGenerator.generateTrades()
 		{
@@ -28,20 +28,20 @@ class Simulator
 	}
 }
 
-class SimulatorRunner
+public class SimulatorRunner
 {
 	let log = Log(clazz: SimulatorRunner.self)
 
 	var simulator: Simulator
 	var timeProvider: TimeProviderStep
 	
-	init (simulator: Simulator, timeProvider: TimeProviderStep)
+	public init (simulator: Simulator, timeProvider: TimeProviderStep)
 	{
 		self.simulator = simulator
 		self.timeProvider = timeProvider
 	}
 	
-	func run (until: Time) throws
+	public func run (until: Time) throws
 	{
 		while timeProvider.now < until
 		{

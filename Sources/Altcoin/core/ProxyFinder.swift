@@ -8,9 +8,9 @@
 import Foundation
 import SwiftSoup
 
-class ProxyFinder
+public class ProxyFinder
 {
-	typealias Proxy = (url: String, port: Int)
+	public typealias Proxy = (url: String, port: Int)
 	
 	var urlStrings = ["https://www.sslproxies.org/", "https://www.us-proxy.org/", "https://free-proxy-list.net/"]
 	var urlStringIndex = 0
@@ -20,7 +20,7 @@ class ProxyFinder
 	
 	static let shared = ProxyFinder()
 
-	init ()
+	public init ()
 	{
 //		try? scan()
 		
@@ -29,7 +29,7 @@ class ProxyFinder
 //		}
 	}
 	
-	func getRandomProxy () -> Proxy?
+	public func getRandomProxy () -> Proxy?
 	{
 		objc_sync_enter(self)
     	defer { objc_sync_exit(self) }

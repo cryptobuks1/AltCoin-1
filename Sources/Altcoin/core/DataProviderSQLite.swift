@@ -9,7 +9,7 @@ import Foundation
 import SQLite
 
 
-class DataProviderDiskSQLite: DataCache
+public class DataProviderDiskSQLite: DataCache
 {
 	let log = Log(clazz: DataProviderDiskSQLite.self)
 	var db: Connection! = nil
@@ -72,7 +72,7 @@ class DataProviderDiskSQLite: DataCache
 	}
 
 
-	init() throws
+	public init() throws
 	{
 		if let dataFolder = getDataFolderUrl()
 		{
@@ -110,7 +110,7 @@ class DataProviderDiskSQLite: DataCache
 	}
 	
 
-	func getCurrencies () throws -> CurrencySet?
+	public func getCurrencies () throws -> CurrencySet?
 	{
 		return try lock.read {
 			let result = try db.prepare(Currencies_.table).map {
@@ -127,7 +127,7 @@ class DataProviderDiskSQLite: DataCache
 		}
 	}
 
-	func putCurrencies (_ data: CurrencySet) throws
+	public func putCurrencies (_ data: CurrencySet) throws
 	{
 		return try lock.write {
 			// should be upsert, not delete & insert
@@ -150,7 +150,7 @@ class DataProviderDiskSQLite: DataCache
 		}
 	}
 
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		return try lock.read {
 			let historicalValuesTable = HistoricalValues_.table(id: currency.id, key: key)
@@ -190,7 +190,7 @@ class DataProviderDiskSQLite: DataCache
 		}
 	}
 	
-	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
+	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
 	{
 		return try lock.read {
 			let timeRangesTable = TimeRanges_.table(id: currency.id, key: key)
@@ -210,7 +210,7 @@ class DataProviderDiskSQLite: DataCache
 		}
 	}
 	
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
 		return try lock.read {
 			if var currencyData = try getCurrencyData(for: currency, key: key, in: range, with: resolution)
@@ -228,7 +228,7 @@ class DataProviderDiskSQLite: DataCache
 	
 	
 	
-	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
+	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
 	{
 		return try lock.write {
 

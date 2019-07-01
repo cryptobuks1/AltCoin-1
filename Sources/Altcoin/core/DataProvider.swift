@@ -8,7 +8,7 @@
 
 import Foundation
 
-protocol DataProvider
+public protocol DataProvider
 {
 	func getCurrencies () throws -> CurrencySet?
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
@@ -18,13 +18,13 @@ protocol DataProvider
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 }
 
-protocol DataSink
+public protocol DataSink
 {
 	func putCurrencies (_ currencies: CurrencySet) throws
 	func putCurrencyDatas (_ data: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
 }
 
-protocol DataCache : DataProvider, DataSink
+public protocol DataCache : DataProvider, DataSink
 {
 	
 }

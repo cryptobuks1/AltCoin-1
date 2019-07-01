@@ -213,7 +213,7 @@ extension HistoricalValues
 	func subRange(_ range: TimeRange) -> HistoricalValues
 	{
 		let s = samples
-		let lowerBound = s.binarySearch(predicate: { $0.time <= range.lowerBound })
+		let lowerBound = s.binarySearch(predicate: { $0.time < range.lowerBound })
 		let upperBound = s.binarySearch(predicate: { $0.time <= range.upperBound })
 
 		guard lowerBound < upperBound else { return HistoricalValues(samples:[]) }
@@ -224,8 +224,8 @@ extension HistoricalValues
 	func notRange(_ range: TimeRange) -> HistoricalValues
 	{
 		let s = samples
-		let lowerBound = s.binarySearch(predicate: { $0.time <= range.lowerBound })
-		let upperBound = s.binarySearch(predicate: { $0.time < range.upperBound })
+		let lowerBound = s.binarySearch(predicate: { $0.time < range.lowerBound })
+		let upperBound = s.binarySearch(predicate: { $0.time <= range.upperBound })
 		
 		guard lowerBound < upperBound else { return HistoricalValues(samples:[]) }
 

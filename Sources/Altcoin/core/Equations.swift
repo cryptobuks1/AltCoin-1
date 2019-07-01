@@ -7,6 +7,6 @@
 
 import Foundation
 
-typealias Equation_P0_R1 = () -> Real
-typealias Equation_P1_R1 = (Real) -> Real
-typealias Equation_PA_R1 = ([Real]) -> Real
+public typealias Equation_P0_R1 = () -> Real
+public typealias Equation_P1_R1 = (Real) -> Real
+public typealias Equation_PA_R1 = ([Real]) -> Real

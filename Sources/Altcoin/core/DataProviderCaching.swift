@@ -8,20 +8,20 @@
 
 import Foundation
 
-class DataProviderCaching : DataProvider
+public class DataProviderCaching : DataProvider
 {
 	let log = LogNull(clazz: DataProviderCaching.self)
 	
 	var source: DataProvider
 	var cache: DataCache
 	
-	init (source: DataProvider, cache: DataCache)
+	public init (source: DataProvider, cache: DataCache)
 	{
 		self.source = source
 		self.cache = cache
 	}
 	
-	func getCurrencies () throws -> CurrencySet?
+	public func getCurrencies () throws -> CurrencySet?
 	{
 		if let data = try cache.getCurrencies()
 		{
@@ -37,7 +37,7 @@ class DataProviderCaching : DataProvider
 		return nil
 	}
 	
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		if let data = try cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
 		{
@@ -59,12 +59,12 @@ class DataProviderCaching : DataProvider
 		return try cache.getCurrencyData(for: currency, key: key, in: range, with: resolution)
 	}
 	
-	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
+	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
 	{
 		return try source.getCurrencyRanges(for: currency, key: key, in: range)
 	}
 	
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
 		if let datas = try cache.getCurrencyDatas(for: currency, key: key, in: range, with: resolution)
 		{

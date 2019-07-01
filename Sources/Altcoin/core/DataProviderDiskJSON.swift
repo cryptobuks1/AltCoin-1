@@ -8,7 +8,7 @@
 
 import Foundation
 
-class DataProviderDiskJSON : DataCache
+public class DataProviderDiskJSON : DataCache
 {
 	let lock = ReadWriteLock()
 	let log = Log(clazz: DataProviderDiskJSON.self)
@@ -25,7 +25,7 @@ class DataProviderDiskJSON : DataCache
 	
 	var fileDatas = [String:CurrencyData]()
 
-	init() throws
+	public init() throws
 	{
 		if let dataFolder = getDataFolderUrl()
 		{
@@ -105,21 +105,21 @@ class DataProviderDiskJSON : DataCache
 		}
 	}
 	
-	func getCurrencies () -> CurrencySet?
+	public func getCurrencies () -> CurrencySet?
 	{
 		return lock.read {
 			return read(fileName: S_.currenciesFileName, type: CurrencySet.self)
 		}
 	}
 
-	func putCurrencies (_ data: CurrencySet)
+	public func putCurrencies (_ data: CurrencySet)
 	{
 		lock.write {
 			write(fileName: S_.currenciesFileName, data: data)
 		}
 	}
 	
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 			return lock.read {
 			let fileName = S_.currencyFileNameTemplate
@@ -138,7 +138,7 @@ class DataProviderDiskJSON : DataCache
 		}
 	}
 	
-	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
+	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
 	{
 			return lock.read {
 			let fileName = S_.currencyFileNameTemplate
@@ -156,7 +156,7 @@ class DataProviderDiskJSON : DataCache
 	}
 	
 
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
 			return lock.read {
 			let fileName = S_.currencyFileNameTemplate
@@ -181,7 +181,7 @@ class DataProviderDiskJSON : DataCache
 	
 	var putCurrencyCount = 0
 	
-	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
+	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
 	{
 		return lock.write {
 			for data in datas
@@ -214,7 +214,7 @@ class DataProviderDiskJSON : DataCache
 		}
 	}
 	
-	func flush ()
+	public func flush ()
 	{
 		lock.write {
 			for fileData in fileDatas

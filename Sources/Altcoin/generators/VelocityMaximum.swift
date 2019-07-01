@@ -7,16 +7,16 @@
 
 import Foundation
 
-class TradeGeneratorVelocitiesMaximum : TradeGeneratorWithDataProviderAndTimeRange
+public class TradeGeneratorVelocitiesMaximum : TradeGeneratorWithDataProviderAndTimeRange
 {
 	let log = Log(clazz: TradeGeneratorVelocitiesMaximum.self)
 
-	override init (relativeDataProvider : RelativeDataProvider, timeRange: TimeRange, resolution: Resolution)
+	public override init (relativeDataProvider : RelativeDataProvider, timeRange: TimeRange, resolution: Resolution)
 	{
 		super.init(relativeDataProvider: relativeDataProvider, timeRange: timeRange, resolution: resolution)
 	}
 	
-	override func generateTrades() throws -> [Trade]?
+	public override func generateTrades() throws -> [Trade]?
 	{
 		let p = relativeDataProvider
 		

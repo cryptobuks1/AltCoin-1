@@ -11,8 +11,6 @@ import AltCoin
 
 //JSONURLSessionManager.shared.addProxies(ProxyFinder.shared.proxies)
 
-func main(_ args: [String]) throws -> Int
-{
 let webDataProvider = DataProviderWeb()
 let diskDataProvider = try DataProviderDiskSQLite()
 let memoryDataProvider = DataProviderMemory()
@@ -37,10 +35,8 @@ let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(t
 
 let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
-try runner.run(until: TimeEvents.firstBubbleStart + 4.0 * TimeQuantities.Week)
+try runner.run(until: TimeEvents.safeNow)
 try memoryDataProvider.writeTo(diskDataProvider)
 
 //diskDataProvider.flush()
 
-return 0
-}

@@ -7,31 +7,31 @@
 
 import Foundation
 
-protocol TradeGenerator {
+public protocol TradeGenerator {
 	func generateTrades () throws -> [Trade]?
 }
 
-class TradeGeneratorWithDataProvider : TradeGenerator
+public class TradeGeneratorWithDataProvider : TradeGenerator
 {
 	var relativeDataProvider : RelativeDataProvider
 	
-	init (relativeDataProvider : RelativeDataProvider)
+	public init (relativeDataProvider : RelativeDataProvider)
 	{
 		self.relativeDataProvider = relativeDataProvider
 	}
 	
-	func generateTrades () throws -> [Trade]?
+	public func generateTrades () throws -> [Trade]?
 	{
 		return nil
 	}
 }
 
-class TradeGeneratorWithDataProviderAndTimeRange : TradeGeneratorWithDataProvider
+public class TradeGeneratorWithDataProviderAndTimeRange : TradeGeneratorWithDataProvider
 {
 	var timeRange: TimeRange
 	var resolution: Resolution
 
-	init (relativeDataProvider : RelativeDataProvider, timeRange: TimeRange, resolution: Resolution)
+	public init (relativeDataProvider : RelativeDataProvider, timeRange: TimeRange, resolution: Resolution)
 	{
 		self.timeRange = timeRange
 		self.resolution = resolution

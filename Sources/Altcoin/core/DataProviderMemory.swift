@@ -7,7 +7,7 @@
 
 import Foundation
 
-class DataProviderMemory : DataCache
+public class DataProviderMemory : DataCache
 {
 	let log = Log(clazz: DataProviderMemory.self)
 	let lock = ReadWriteLock()
@@ -16,32 +16,32 @@ class DataProviderMemory : DataCache
 	typealias KeyedCurrencyData = [DataKey:CurrencyData]
 	var currencyDatas = [CurrencyId:KeyedCurrencyData]()
 
-	init()
+	public init()
 	{
 	}
 
-	func getCurrencies () -> CurrencySet?
+	public func getCurrencies () -> CurrencySet?
 	{
 		return lock.read {
 			return currencies
 		}
 	}
 	
-	func putCurrencies (_ data: CurrencySet)
+	public func putCurrencies (_ data: CurrencySet)
 	{
 		return lock.write {
 			currencies = data
 		}
 	}
 
-	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
+	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
 	{
 		return lock.read {
 			return currencyDatas[currency.id]?[key]?.subset(range)
 		}
 	}
 	
-	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
+	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> [CurrencyData]?
 	{
 		return lock.read {
 			if let data = getCurrencyData(for: currency, key: key, in: range, with: resolution)
@@ -56,14 +56,14 @@ class DataProviderMemory : DataCache
 		}
 	}
 
-	func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
+	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
 	{
 		return lock.read {
 			return currencyDatas[currency.id]?[key]?.ranges.intersection(range)
 		}
 	}
 
-	func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
+	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
 	{
 		let keyedCurrencyDatas = lock.read { () -> [DataKey:CurrencyData] in
 			var keyedCurrencyDatas = self.currencyDatas[currency.id] ?? [DataKey:CurrencyData]()
@@ -88,7 +88,7 @@ class DataProviderMemory : DataCache
 		}
 	}
 	
-	func writeTo(_ sink: DataSink) throws
+	public func writeTo(_ sink: DataSink) throws
 	{
 		return try lock.read {
 			if let currencies = currencies
