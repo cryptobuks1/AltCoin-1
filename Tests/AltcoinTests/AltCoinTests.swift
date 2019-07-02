@@ -91,6 +91,14 @@ final class AltCoinTests: XCTestCase {
 		let nr6 = v.notRange(2.0 ... 8.0).samples.map { $0.time }
         XCTAssertEqual(nr6, [1.0])
 		log.print(nr6)
+
+		let nr7 = v.notRange(10.0 ... 11.0).samples.map { $0.time }
+        XCTAssertEqual(nr7, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+		log.print(nr7)
+
+		let nr8 = v.notRange(0.0 ... 0.5 ).samples.map { $0.time }
+        XCTAssertEqual(nr8, [1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0, 8.0])
+		log.print(nr8)
     }
 
     func merging() throws {

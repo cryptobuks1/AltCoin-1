@@ -79,14 +79,17 @@ public class DataProviderDiskSQLite: DataCache
 			try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
 			db = try Connection(dataFolder.appendingPathComponent(S_.currenciesFileName).relativePath)
 			
-			let _ = try? db.run(Currencies_.table.create { t in
-				t.column(Currencies_.id, primaryKey: true)
-				t.column(Currencies_.name)
-				t.column(Currencies_.rank)
-				t.column(Currencies_.tokens)
-				t.column(Currencies_.timeRangeL)
-				t.column(Currencies_.timeRangeU)
-			})
+			if !tableExists(db, Currencies_.table)
+			{
+				let _ = try db.run(Currencies_.table.create { t in
+					t.column(Currencies_.id, primaryKey: true)
+					t.column(Currencies_.name)
+					t.column(Currencies_.rank)
+					t.column(Currencies_.tokens)
+					t.column(Currencies_.timeRangeL)
+					t.column(Currencies_.timeRangeU)
+				})
+			}
 			
 //			let _ = try? db.run(CurrencyDatas_.table.create { t in
 //				t.column(CurrencyDatas_.id, primaryKey: true)
@@ -234,12 +237,12 @@ public class DataProviderDiskSQLite: DataCache
 
 			for data in datas
 			{
-				log.print("putCurrencyDatas data \(data.key) timeRange \(TimeEvents.toString(range))")
+				log.print("putCurrencyDatas currency \(currency.id) data \(data.key) timeRange \(TimeEvents.toString(range))")
 				
 				let currencyData = try getCurrencyData(for: currency, key: data.key, in: range, with: resolution)
 				let merged = currencyData?.merge(data) ?? data
 				let mergedSampleRange = merged.values.timeRange ?? TimeRange(uncheckedBounds: (0,0))
-				log.print("range \(range) -> mergedSampleRange \(mergedSampleRange)")
+				log.print("range \(range) -> mergedSampleRange \(mergedSampleRange) #samples(\(merged.values.samples.count)) firstSample(\(merged.values.samples.first)) lastSample(\(merged.values.samples.last))")
 				
 				let historicalValuesTable = HistoricalValues_.table(id: currency.id, key: data.key)
 				if !tableExists(db, historicalValuesTable) {
@@ -277,7 +280,7 @@ public class DataProviderDiskSQLite: DataCache
 					)
 				
 				try db.transaction {
-					for value in data.values.samples
+					for value in merged.values.samples
 					{
 						try db.run(historicalValuesTable.insert(
 	//						HistoricalValues_.id <- currency.id,

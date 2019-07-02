@@ -207,6 +207,8 @@ extension HistoricalValues
 
 		let lhsSamples = notRange(rhs.timeRange!).samples
 		let samples = lhsSamples + rhs.samples
+		
+		HistoricalValues.log.print("merge_contiguous lhs.range(\(self.timeRange)) lhs.count(\(self.samples.count)) lhs.reduced(\(lhsSamples.count)) rhs.timeRange(\(rhs.timeRange)) rhs.samples(\(rhs.samples.count)))")
 		return HistoricalValues(samples: samples.sorted { return $0.time < $1.time })
 	}
 
@@ -227,7 +229,7 @@ extension HistoricalValues
 		let lowerBound = s.binarySearch(predicate: { $0.time < range.lowerBound })
 		let upperBound = s.binarySearch(predicate: { $0.time <= range.upperBound })
 		
-		guard lowerBound < upperBound else { return HistoricalValues(samples:[]) }
+		guard lowerBound < upperBound else { return self }
 
 		let l = s[0..<lowerBound]
 		let u = s[upperBound..<s.count]

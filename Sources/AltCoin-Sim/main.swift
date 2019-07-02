@@ -9,12 +9,11 @@
 import Foundation
 import AltCoin
 
-//JSONURLSessionManager.shared.addProxies(ProxyFinder.shared.proxies)
-
 let webDataProvider = DataProviderWeb()
 let diskDataProvider = try DataProviderDiskSQLite()
 let memoryDataProvider = DataProviderMemory()
 let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
+
 //let memoryCacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
 let memoryCacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
@@ -35,8 +34,7 @@ let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(t
 
 let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
-try runner.run(until: TimeEvents.safeNow)
-try memoryDataProvider.writeTo(diskDataProvider)
+try runner.run(until: TimeEvents.july1st2019)
 
-//diskDataProvider.flush()
+try memoryDataProvider.writeTo(diskDataProvider)
 

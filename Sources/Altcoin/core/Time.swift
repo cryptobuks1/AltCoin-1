@@ -80,7 +80,8 @@ public class TimeEvents
 	public static let secondBubbleStart = toDate("2019-02-01T00:00:00+0000").timeIntervalSinceReferenceDate
 	public static let year2019 = toDate("2019-01-01T00:00:00+0000").timeIntervalSinceReferenceDate
 	public static let oneMonthAgo = Date().timeIntervalSinceReferenceDate - 4 * TimeQuantities.Week
-
+	public static let july1st2019 = toDate("2019-07-01T00:00:00+0000").timeIntervalSinceReferenceDate
+	
 	public static let now = Date().timeIntervalSinceReferenceDate
 	public static let safeNow = now - TimeQuantities.Hour
 }
