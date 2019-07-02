@@ -74,6 +74,16 @@ public class TimeEvents
 	{
 		return "(\(TimeEvents.toString(range.lowerBound)) ... \(TimeEvents.toString(range.upperBound)))"
 	}
+	
+	public static func findTo12am () -> Date
+	{
+		let date = Date()
+		let cal = Calendar(identifier: .gregorian)
+		let components = cal.dateComponents([.day , .month, .year ], from: date)
+		let newDate = cal.date(from: components)
+		
+		return newDate!
+	}
 
 	public static let firstBubbleStart = toDate("2017-03-01T00:00:00+0000").timeIntervalSinceReferenceDate
 	public static let firstBubbleCrash = toDate("2017-12-16T00:00:00+0000").timeIntervalSinceReferenceDate
@@ -81,6 +91,7 @@ public class TimeEvents
 	public static let year2019 = toDate("2019-01-01T00:00:00+0000").timeIntervalSinceReferenceDate
 	public static let oneMonthAgo = Date().timeIntervalSinceReferenceDate - 4 * TimeQuantities.Week
 	public static let july1st2019 = toDate("2019-07-01T00:00:00+0000").timeIntervalSinceReferenceDate
+	public static let today12am = findTo12am().timeIntervalSinceReferenceDate
 	
 	public static let now = Date().timeIntervalSinceReferenceDate
 	public static let safeNow = now - TimeQuantities.Hour
