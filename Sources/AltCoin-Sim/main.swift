@@ -14,10 +14,11 @@ let diskDataProvider = try DataProviderDiskSQLite()
 let memoryDataProvider = DataProviderMemory()
 let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
 
-//let memoryCacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
-let memoryCacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
+//let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
+//let cacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
+let cacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
-let dataProvider = memoryCacheProvider
+let dataProvider = cacheProvider
 let timeProvider = TimeProviderStep(now: TimeEvents.roundDown(TimeEvents.firstBubbleStart, range: TimeQuantities.Week), stepEquation: StandardTimeEquations.nextDay)
 
 let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)

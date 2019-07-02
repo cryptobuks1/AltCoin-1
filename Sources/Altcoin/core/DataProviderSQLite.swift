@@ -8,6 +8,19 @@
 import Foundation
 import SQLite
 
+typealias DBTime = Int64
+
+extension Double {
+	var dbTime : Int64 {
+		return Int64(self * 100.0)
+	}
+}
+
+extension DBTime {
+	var time : TimeInterval {
+		return TimeInterval(self) / 100.0
+	}
+}
 
 public class DataProviderDiskSQLite: DataCache
 {
@@ -40,8 +53,8 @@ public class DataProviderDiskSQLite: DataCache
 		static let name = Expression<String>("name")
 		static let rank = Expression<Int>("rank")
 		static let tokens = Expression<String>("tokens")
-		static let timeRangeL = Expression<Double>("timeRangeL")
-		static let timeRangeU = Expression<Double>("timeRangeU")
+		static let timeRangeL = Expression<DBTime>("timeRangeL")
+		static let timeRangeU = Expression<DBTime>("timeRangeU")
 	}
 
 //	class CurrencyDatas_ {
@@ -57,8 +70,8 @@ public class DataProviderDiskSQLite: DataCache
 //		static let key = Expression<String>("key")
 
 		static func table(id: String, key: String) -> Table { return Table("\(id)_\(key)_timeRanges") }
-		static let lowerBound = Expression<Time>("lowerBound")
-		static let upperBound = Expression<Real>("upperBound")
+		static let lowerBound = Expression<DBTime>("lowerBound")
+		static let upperBound = Expression<DBTime>("upperBound")
 	}
 
 	class HistoricalValues_ {
@@ -67,7 +80,7 @@ public class DataProviderDiskSQLite: DataCache
 //		static let key = Expression<String>("key")
 
 		static func table(id: String, key: String) -> Table { return Table("\(id)_\(key)_historicalValues") }
-		static let time = Expression<Time>("time")
+		static let time = Expression<DBTime>("time")
 		static let value = Expression<Real>("value")
 	}
 
@@ -122,7 +135,7 @@ public class DataProviderDiskSQLite: DataCache
 					name: $0[Currencies_.name],
 					rank: $0[Currencies_.rank],
 					tokens: $0[Currencies_.tokens].split(separator: ",").map { return String($0) },
-					timeRange: TimeRange(uncheckedBounds: ($0[Currencies_.timeRangeL],$0[Currencies_.timeRangeU]))
+					timeRange: TimeRange(uncheckedBounds: ($0[Currencies_.timeRangeL].time,$0[Currencies_.timeRangeU].time))
 				)
 			}
 			
@@ -145,8 +158,8 @@ public class DataProviderDiskSQLite: DataCache
 						Currencies_.name <- $0.name,
 						Currencies_.rank <- $0.rank,
 						Currencies_.tokens <- $0.tokens.joined(separator: ","),
-						Currencies_.timeRangeL <- $0.timeRange.lowerBound,
-						Currencies_.timeRangeU <- $0.timeRange.upperBound
+						Currencies_.timeRangeL <- $0.timeRange.lowerBound.dbTime,
+						Currencies_.timeRangeU <- $0.timeRange.upperBound.dbTime
 					));
 				}
 			}
@@ -156,41 +169,46 @@ public class DataProviderDiskSQLite: DataCache
 	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		return try lock.read {
-			let historicalValuesTable = HistoricalValues_.table(id: currency.id, key: key)
-			guard tableExists(db, historicalValuesTable) else { return nil }
-
-			let timeRangesTable = TimeRanges_.table(id: currency.id, key: key)
-			guard tableExists(db, timeRangesTable) else { return nil }
-
-			let values = try db.prepare(
-					historicalValuesTable
-	//					.filter(HistoricalValues_.id == currency.id)
-	//					.filter(HistoricalValues_.key == key)
-					.filter(HistoricalValues_.time >= range.lowerBound)
-					.filter(HistoricalValues_.time <= range.upperBound)
-			).map {
-				return HistoricalValue (time: $0[HistoricalValues_.time], value: $0[HistoricalValues_.value])
-			}
-
-			let ranges = try db.prepare (
-				timeRangesTable
-	//				.filter(TimeRanges_.id == currency.id)
-	//				.filter(TimeRanges_.key == key)
-				.filter(TimeRanges_.lowerBound <= range.upperBound)
-				.filter(TimeRanges_.upperBound >= range.lowerBound)
-			).map {
-				return TimeRange (uncheckedBounds: ($0[TimeRanges_.lowerBound], $0[TimeRanges_.upperBound]))
-			}
-
-			let currencyData = CurrencyData(
-				key: key,
-				ranges: TimeRanges(ranges: ranges),
-				values: HistoricalValues(samples: values),
-				wasCached: true
-			)
-			
-			return currencyData.subset(range)
+			return try getCurrencyData_ (for: currency, key: key, in: range, with: resolution)
 		}
+	}
+	
+	public func getCurrencyData_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	{
+		let historicalValuesTable = HistoricalValues_.table(id: currency.id, key: key)
+		guard tableExists(db, historicalValuesTable) else { return nil }
+
+		let timeRangesTable = TimeRanges_.table(id: currency.id, key: key)
+		guard tableExists(db, timeRangesTable) else { return nil }
+
+		let values = try db.prepare(
+				historicalValuesTable
+//					.filter(HistoricalValues_.id == currency.id)
+//					.filter(HistoricalValues_.key == key)
+				.filter(HistoricalValues_.time >= range.lowerBound.dbTime)
+				.filter(HistoricalValues_.time <= range.upperBound.dbTime)
+		).map {
+			return HistoricalValue (time: $0[HistoricalValues_.time].time, value: $0[HistoricalValues_.value])
+		}
+
+		let ranges = try db.prepare (
+			timeRangesTable
+//				.filter(TimeRanges_.id == currency.id)
+//				.filter(TimeRanges_.key == key)
+			.filter(TimeRanges_.lowerBound <= range.upperBound.dbTime)
+			.filter(TimeRanges_.upperBound >= range.lowerBound.dbTime)
+		).map {
+			return TimeRange (uncheckedBounds: ($0[TimeRanges_.lowerBound].time, $0[TimeRanges_.upperBound].time))
+		}
+
+		let currencyData = CurrencyData(
+			key: key,
+			ranges: TimeRanges(ranges: ranges),
+			values: HistoricalValues(samples: values),
+			wasCached: true
+		)
+		
+		return currencyData.subset(range)
 	}
 	
 	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
@@ -203,10 +221,10 @@ public class DataProviderDiskSQLite: DataCache
 				timeRangesTable
 	//			.filter(TimeRanges_.id == currency.id)
 	//			.filter(TimeRanges_.key == key)
-				.filter(TimeRanges_.lowerBound <= range.upperBound)
-				.filter(TimeRanges_.upperBound >= range.lowerBound)
+				.filter(TimeRanges_.lowerBound <= range.upperBound.dbTime)
+				.filter(TimeRanges_.upperBound >= range.lowerBound.dbTime)
 			).map {
-				return TimeRange (uncheckedBounds: ($0[TimeRanges_.lowerBound], $0[TimeRanges_.upperBound]))
+				return TimeRange (uncheckedBounds: ($0[TimeRanges_.lowerBound].time, $0[TimeRanges_.upperBound].time))
 			}
 			
 			return TimeRanges(ranges: ranges).intersection(range)
@@ -229,8 +247,6 @@ public class DataProviderDiskSQLite: DataCache
 		}
 	}
 	
-	
-	
 	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
 	{
 		return try lock.write {
@@ -239,7 +255,7 @@ public class DataProviderDiskSQLite: DataCache
 			{
 				log.print { "putCurrencyDatas currency \(currency.id) data \(data.key) timeRange \(TimeEvents.toString(range))" }
 				
-				let currencyData = try getCurrencyData(for: currency, key: data.key, in: range, with: resolution)
+				let currencyData = try getCurrencyData_(for: currency, key: data.key, in: range, with: resolution)
 				let merged = currencyData?.merge(data) ?? data
 				let mergedSampleRange = merged.values.timeRange ?? TimeRange(uncheckedBounds: (0,0))
 				log.print { "range \(range) -> mergedSampleRange \(mergedSampleRange) #samples(\(merged.values.samples.count)) firstSample(\(merged.values.samples.first)) lastSample(\(merged.values.samples.last))" }
@@ -251,7 +267,7 @@ public class DataProviderDiskSQLite: DataCache
 							.create { t in
 	//							t.column(HistoricalValues_.id, primaryKey: true)
 	//							t.column(HistoricalValues_.key)
-								t.column(HistoricalValues_.time)
+								t.column(HistoricalValues_.time, primaryKey: true)
 								t.column(HistoricalValues_.value)
 							}
 						)
@@ -274,8 +290,8 @@ public class DataProviderDiskSQLite: DataCache
 					historicalValuesTable
 	//					.filter(HistoricalValues_.id == currency.id)
 	//					.filter(HistoricalValues_.key == data.key)
-						.filter(HistoricalValues_.time >= mergedSampleRange.lowerBound)
-						.filter(HistoricalValues_.time <= mergedSampleRange.upperBound)
+						.filter(HistoricalValues_.time >= mergedSampleRange.lowerBound.dbTime)
+						.filter(HistoricalValues_.time <= mergedSampleRange.upperBound.dbTime)
 						.delete()
 					)
 				
@@ -285,7 +301,7 @@ public class DataProviderDiskSQLite: DataCache
 						try db.run(historicalValuesTable.insert(
 	//						HistoricalValues_.id <- currency.id,
 	//						HistoricalValues_.key <- data.key,
-							HistoricalValues_.time <- value.time,
+							HistoricalValues_.time <- value.time.dbTime,
 							HistoricalValues_.value <- value.value
 						))
 					}
@@ -295,8 +311,8 @@ public class DataProviderDiskSQLite: DataCache
 					timeRangesTable
 	//					.filter(TimeRanges_.id == currency.id)
 	//					.filter(TimeRanges_.key == data.key)
-						.filter(TimeRanges_.lowerBound >= range.lowerBound)
-						.filter(TimeRanges_.upperBound <= range.upperBound)
+						.filter(TimeRanges_.lowerBound >= range.lowerBound.dbTime)
+						.filter(TimeRanges_.upperBound <= range.upperBound.dbTime)
 						.delete()
 					)
 
@@ -307,8 +323,8 @@ public class DataProviderDiskSQLite: DataCache
 						try db.run(timeRangesTable.insert(
 	//						TimeRanges_.id <- currency.id,
 	//						TimeRanges_.key <- data.key,
-							TimeRanges_.lowerBound <- range.lowerBound,
-							TimeRanges_.upperBound <- range.upperBound
+							TimeRanges_.lowerBound <- range.lowerBound.dbTime,
+							TimeRanges_.upperBound <- range.upperBound.dbTime
 						))
 					}
 				}

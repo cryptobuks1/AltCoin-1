@@ -206,10 +206,11 @@ extension HistoricalValues
 		guard !rhs.samples.isEmpty else { return self }
 
 		let lhsSamples = notRange(rhs.timeRange!).samples
-		let samples = lhsSamples + rhs.samples
+		var samples = lhsSamples + rhs.samples
+		samples.sort { return $0.time < $1.time }
 		
 		HistoricalValues.log.print { "merge_contiguous lhs.range(\(self.timeRange)) lhs.count(\(self.samples.count)) lhs.reduced(\(lhsSamples.count)) rhs.timeRange(\(rhs.timeRange)) rhs.samples(\(rhs.samples.count)))" }
-		return HistoricalValues(samples: samples.sorted { return $0.time < $1.time })
+		return HistoricalValues(samples: samples)
 	}
 
 	func subRange(_ range: TimeRange) -> HistoricalValues

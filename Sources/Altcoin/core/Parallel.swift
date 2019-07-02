@@ -135,7 +135,7 @@ public class ReadWriteLock
 	}
 	
 	public func read<T> (_ f: () throws -> T) throws -> T
-	{
+	{		
 		pthread_rwlock_rdlock(&l)
 		defer { pthread_rwlock_unlock(&l) }
 		
