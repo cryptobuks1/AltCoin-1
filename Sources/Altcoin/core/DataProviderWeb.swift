@@ -11,8 +11,7 @@ import sajson_swift
 
 public class DataProviderWeb : DataProvider
 {
-	let log = Log(clazz: DataProviderWeb.self)
-	let logDetail = LogNull(clazz: DataProviderWeb.self)
+	let log = LogNull(clazz: DataProviderWeb.self)
 
 	class S_ {
 		static let
@@ -86,14 +85,14 @@ public class DataProviderWeb : DataProvider
 				}
 				else
 				{
-					print("failed to deserialize coin \(coin)")
+					log.error { "failed to deserialize coin \(coin)" }
 				}
 
 				
 				return nil;
 			})
 			
-			log.print("read web for currencies")
+			log.print { "read web for currencies" }
 			
 			return CurrencySet(currencies: currencies.compactMap({ $0 }))
 		}
@@ -128,12 +127,12 @@ public class DataProviderWeb : DataProvider
 				}
 				else
 				{
-					print("failed to deserialize historical value \(v)")
+					log.error { "failed to deserialize historical value \(v)" }
 				}
 			}
 			
 			let values = HistoricalValues(samples: historicalValues)
-			logDetail.print("parsed historical values have median time span \(values.medianTimeBetweenSamples)")
+			log.print { "parsed historical values have median time span \(values.medianTimeBetweenSamples)" }
 			
 			return values
 		}
@@ -155,7 +154,7 @@ public class DataProviderWeb : DataProvider
 		{
 			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
 			let roundedRange = rangeSegmentTime.clamped(to: 0 ... TimeEvents.safeNow )
-			log.print("getCurrencyDatas_ range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))")
+			log.print { "getCurrencyDatas_ range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
 		
 			let currencyDataURLString = S_.currencyDataURLStringTemplate
 				.replacingOccurrences(of: S_.templateId, with: currency.id)
@@ -203,7 +202,7 @@ public class DataProviderWeb : DataProvider
 			}
 		}
 		
-		log.print("read web for \(currency.id)")
+		log.print { "read web for \(currency.id)" }
 		guard !datas.isEmpty else { return nil }
 		return datas.map({ return $0.value })
 	}

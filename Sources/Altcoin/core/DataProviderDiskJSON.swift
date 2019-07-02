@@ -67,7 +67,7 @@ public class DataProviderDiskJSON : DataCache
 						let decoder = JSONDecoder()
 						let decoded = try decoder.decode(type, from: data)
 						
-						log.print("read cache for \(fileName)")
+						log.print { "read cache for \(fileName)" }
 						return decoded
 					}
 				}
@@ -93,7 +93,7 @@ public class DataProviderDiskJSON : DataCache
 						if let encoded = try? encoder.encode(data)
 						{
 							try encoded.write(to: fileURL, options: .atomic)
-							log.print("wrote cache for \(fileName)")
+							log.print { "wrote cache for \(fileName)" }
 						}
 					}
 				}

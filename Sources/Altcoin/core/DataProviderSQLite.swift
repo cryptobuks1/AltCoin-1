@@ -237,12 +237,12 @@ public class DataProviderDiskSQLite: DataCache
 
 			for data in datas
 			{
-				log.print("putCurrencyDatas currency \(currency.id) data \(data.key) timeRange \(TimeEvents.toString(range))")
+				log.print { "putCurrencyDatas currency \(currency.id) data \(data.key) timeRange \(TimeEvents.toString(range))" }
 				
 				let currencyData = try getCurrencyData(for: currency, key: data.key, in: range, with: resolution)
 				let merged = currencyData?.merge(data) ?? data
 				let mergedSampleRange = merged.values.timeRange ?? TimeRange(uncheckedBounds: (0,0))
-				log.print("range \(range) -> mergedSampleRange \(mergedSampleRange) #samples(\(merged.values.samples.count)) firstSample(\(merged.values.samples.first)) lastSample(\(merged.values.samples.last))")
+				log.print { "range \(range) -> mergedSampleRange \(mergedSampleRange) #samples(\(merged.values.samples.count)) firstSample(\(merged.values.samples.first)) lastSample(\(merged.values.samples.last))" }
 				
 				let historicalValuesTable = HistoricalValues_.table(id: currency.id, key: data.key)
 				if !tableExists(db, historicalValuesTable) {

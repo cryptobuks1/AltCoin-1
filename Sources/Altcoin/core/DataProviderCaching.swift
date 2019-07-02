@@ -46,7 +46,7 @@ public class DataProviderCaching : DataProvider
 		
 		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: range) ?? TimeRanges(ranges: [])
 		let requiredRanges = range.excluding(cachedTimeRanges)
-		log.print("range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)")
+		log.print { "range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)" }
 
 		for requiredRange in requiredRanges.ranges
 		{
@@ -73,7 +73,7 @@ public class DataProviderCaching : DataProvider
 		
 		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: range) ?? TimeRanges(ranges: [])
 		let requiredRanges = range.excluding(cachedTimeRanges)
-		log.print("range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)")
+		log.print { "range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)" }
 
 		for requiredRange in requiredRanges.ranges
 		{

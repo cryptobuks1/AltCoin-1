@@ -94,7 +94,7 @@ public class DataProviderMemory : DataCache
 			if let currencies = currencies
 			{
 				try sink.putCurrencies(currencies)
-				log.print("wrote currencies")
+				log.print { "wrote currencies" }
 				
 				for currency in currencies.currencies
 				{
@@ -103,7 +103,7 @@ public class DataProviderMemory : DataCache
 						for (_, data) in datas
 						{
 							try sink.putCurrencyDatas([data], for: currency, in: data.enclosingTimeRange ?? TimeRange.Zero, with: .minute)
-							log.print("wrote \(currency.id) \(data.key)")
+							log.print { "wrote \(currency.id) \(data.key)" }
 						}
 					}
 				}

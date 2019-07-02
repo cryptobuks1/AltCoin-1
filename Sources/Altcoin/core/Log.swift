@@ -44,7 +44,8 @@ public class Log
 		self.title = title
 	}
 
-	func print(_ v: Any) { Swift.print("\(title): \(v)") }
+	func print(_ f: ()->String?) { if let s = f() { Swift.print("\(title): \(s)") } }
+	func error(_ f: ()->String?) { if let s = f() { Swift.print("\(title): ERROR \(s)") } }
 }
 
 public class LogNull
@@ -61,5 +62,6 @@ public class LogNull
 	{
 	}
 	
-	func print(_ v: Any) { }
+	func print(_ s: ()->String?) { }
+	func error(_ f: ()->String?) { if let s = f() { Swift.print("ERROR \(s)") } }
 }

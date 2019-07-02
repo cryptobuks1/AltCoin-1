@@ -45,7 +45,7 @@ public class SimulatorRunner
 	{
 		while timeProvider.now < until
 		{
-			log.print("stepping simulation at time \(TimeEvents.toString(timeProvider.now))")
+			log.print { "stepping simulation at time \(TimeEvents.toString(timeProvider.now))" }
 			try simulator.execute()
 			timeProvider.step()
 		}

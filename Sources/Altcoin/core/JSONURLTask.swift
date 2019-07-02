@@ -117,7 +117,7 @@ class JSONURLSessionManager
 
 	func cycle () -> Bool
 	{
-		log.print("cycling")
+		log.print { "cycling" }
 		
 		if let proxy = ProxyFinder.shared.getRandomProxy()
 		{
@@ -137,6 +137,7 @@ class JSONURLSessionManager
 
 class JSONURLTask
 {
+	let logCache = LogNull(clazz: JSONURLTask.self)
 	let log = Log(clazz: JSONURLTask.self)
 
 	enum URLResponseError : Error {
@@ -186,7 +187,7 @@ class JSONURLTask
 	{
 		if useCache, let json = WebCache.instance.getCacheFor(url: url)
 		{
-			log.print("url cache of \(url.absoluteString)")
+			logCache.print { "url cache of \(url.absoluteString)" }
 			return (json, nil, true)
 		}
 		
@@ -203,7 +204,7 @@ class JSONURLTask
 		task.resume()
 		sem.wait()
 		
-		log.print("web read of \(url.absoluteString)")
+		log.print { "web read of \(url.absoluteString)" }
 
 		if useCache
 		{
@@ -258,8 +259,8 @@ class JSONURLTask
 
 				if !JSONURLSessionManager.shared.v.cycle()
 				{
-					log.print("could not cycle, instead sleeping.")
-					print("sleeping for \(sleepSeconds)")
+					log.print { "could not cycle, instead sleeping." }
+					log.print { "sleeping for \(sleepSeconds)" }
 					sleep(sleepSeconds)
 
 					if alreadySlept
@@ -270,7 +271,7 @@ class JSONURLTask
 					if !alreadySlept
 					{
 						 requestDelaySeconds *= 1.02
-						 print("increased sleepSeconds to \(sleepSeconds) requestDelaySeconds \(requestDelaySeconds)")
+						 log.print { "increased sleepSeconds to \(sleepSeconds) requestDelaySeconds \(requestDelaySeconds)" }
 					}
 				
 					alreadySlept = true

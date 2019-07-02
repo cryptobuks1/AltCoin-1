@@ -41,7 +41,7 @@ public class RelativeDataProviderConcrete : RelativeDataProvider
 		
 		let range = TimeRange(uncheckedBounds: (now + relativeRange.lowerBound, now + relativeRange.upperBound ))
 		
-		RelativeDataProviderConcrete.log.print("getCurrencyData using timeRange \(TimeEvents.toString(range))")
+		RelativeDataProviderConcrete.log.print { "getCurrencyData using timeRange \(TimeEvents.toString(range))" }
 
 		return try dataProvider.getCurrencyData(for: currency, key: key, in: range, with: resolution)
 	}

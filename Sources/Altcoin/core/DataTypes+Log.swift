@@ -14,7 +14,7 @@ extension TimeRange
 
 extension HistoricalValues
 {
-	public static let log = Log(clazz: HistoricalValues.self)
+	public static let log = LogNull(clazz: HistoricalValues.self)
 }
 
 extension TimeRanges

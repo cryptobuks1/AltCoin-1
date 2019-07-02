@@ -83,7 +83,7 @@ extension TimeRange
 			result.append(self)
 		}
 		
-		TimeRange.log.print("excluding \(self) & \(r) -> \(result)")
+		TimeRange.log.print { "excluding \(self) & \(r) -> \(result)" }
 		return result
 	}
 	
@@ -102,7 +102,7 @@ extension TimeRange
 			result = resultNext
 		}
 		
-		TimeRange.log.print("excluding \(self) & \(rs) -> \(result)")
+		TimeRange.log.print { "excluding \(self) & \(rs) -> \(result)" }
 		return result
 	}
 	
@@ -208,7 +208,7 @@ extension HistoricalValues
 		let lhsSamples = notRange(rhs.timeRange!).samples
 		let samples = lhsSamples + rhs.samples
 		
-		HistoricalValues.log.print("merge_contiguous lhs.range(\(self.timeRange)) lhs.count(\(self.samples.count)) lhs.reduced(\(lhsSamples.count)) rhs.timeRange(\(rhs.timeRange)) rhs.samples(\(rhs.samples.count)))")
+		HistoricalValues.log.print { "merge_contiguous lhs.range(\(self.timeRange)) lhs.count(\(self.samples.count)) lhs.reduced(\(lhsSamples.count)) rhs.timeRange(\(rhs.timeRange)) rhs.samples(\(rhs.samples.count)))" }
 		return HistoricalValues(samples: samples.sorted { return $0.time < $1.time })
 	}
 
