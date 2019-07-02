@@ -159,7 +159,7 @@ public class DataProviderWeb : DataProvider
 		for rangeSegment in rangeSegments
 		{
 			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
-			let roundedRange = rangeSegmentTime.clamped(to: 0 ... endSourcetime() )
+			let roundedRange = rangeSegmentTime.clamped(to: 0 ... endSourceTime() )
 			log.print { "getCurrencyDatas_ range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
 		
 			let currencyDataURLString = S_.currencyDataURLStringTemplate
