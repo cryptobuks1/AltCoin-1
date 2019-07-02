@@ -12,6 +12,9 @@ import sajson_swift
 public class DataProviderWeb : DataProvider
 {
 	let log = LogNull(clazz: DataProviderWeb.self)
+	
+	public typealias SourceTimeGenerator = () -> TimeInterval
+	let endSourceTime : SourceTimeGenerator
 
 	class S_ {
 		static let
@@ -34,8 +37,11 @@ public class DataProviderWeb : DataProvider
 			market_cap_by_available_supply = "market_cap_by_available_supply"
 	}
 
-	public init ()
+	
+
+	public init (endSourceTime: @escaping SourceTimeGenerator = { TimeEvents.today12am } )
 	{
+		self.endSourceTime = endSourceTime
 	}
 	
 	
@@ -153,7 +159,7 @@ public class DataProviderWeb : DataProvider
 		for rangeSegment in rangeSegments
 		{
 			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
-			let roundedRange = rangeSegmentTime.clamped(to: 0 ... TimeEvents.today12am )
+			let roundedRange = rangeSegmentTime.clamped(to: 0 ... endSourcetime() )
 			log.print { "getCurrencyDatas_ range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
 		
 			let currencyDataURLString = S_.currencyDataURLStringTemplate
