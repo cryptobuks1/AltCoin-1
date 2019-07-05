@@ -14,11 +14,11 @@ let diskDataProvider = try DataProviderDiskSQLite()
 let memoryDataProvider = DataProviderMemory()
 let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
 
-//let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
+let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
 //let cacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
-let cacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
+//let cacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
-let dataProvider = cacheProvider
+let dataProvider = DataProviderCurrencyFilter(provider: cacheProvider, filter: { $0.rank < 5 })
 let timeProvider = TimeProviderStep(now: TimeEvents.roundDown(TimeEvents.firstBubbleStart, range: TimeQuantities.Week), stepEquation: StandardTimeEquations.nextDay)
 
 let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)
@@ -37,5 +37,5 @@ let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
 try runner.run(until: TimeEvents.july1st2019)
 
-try memoryDataProvider.writeTo(diskDataProvider)
+//try memoryDataProvider.writeTo(diskDataProvider)
 

@@ -121,7 +121,7 @@ public class DataProviderDiskJSON : DataCache
 	
 	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
-			return lock.read {
+		return lock.read {
 			let fileName = S_.currencyFileNameTemplate
 				.replacingOccurrences(of: S_.templateId, with: currency.id)
 				.replacingOccurrences(of: S_.templateKey, with: key)
@@ -140,7 +140,7 @@ public class DataProviderDiskJSON : DataCache
 	
 	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
 	{
-			return lock.read {
+		return lock.read {
 			let fileName = S_.currencyFileNameTemplate
 				.replacingOccurrences(of: S_.templateId, with: currency.id)
 				.replacingOccurrences(of: S_.templateKey, with: key)
@@ -158,7 +158,7 @@ public class DataProviderDiskJSON : DataCache
 
 	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-			return lock.read {
+		return lock.read {
 			let fileName = S_.currencyFileNameTemplate
 				.replacingOccurrences(of: S_.templateId, with: currency.id)
 				.replacingOccurrences(of: S_.templateKey, with: key)

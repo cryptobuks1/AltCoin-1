@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import SigmaSwiftStatistics
 
 public class Simulator
 {

@@ -18,7 +18,7 @@ class WebCache
 
 	class S_ {
 		static let
-			folderName = "altcoin-simulator/http"
+			folderName = "\(S.documents)/http"
 	}
 
 	init()

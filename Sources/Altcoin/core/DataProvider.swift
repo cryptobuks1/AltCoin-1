@@ -14,7 +14,7 @@ public protocol DataProvider
 	func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	func getCurrencyRanges (for currency: Currency, key: DataKey, in range: TimeRange) throws -> TimeRanges?
 	
-	// when we request one key, we might get several, this enables caching all the extra data immediately
+	// when we request one key, we might get several, or a different time range, this enables caching all the extra data immediately
 	func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 }
 

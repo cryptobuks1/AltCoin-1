@@ -109,11 +109,11 @@ extension Sequence
 
 public extension Array
 {
-	public var count_slow : Int {
+	var count_slow : Int {
 		return self.count
 	}
 	
-	public func index_slow(_ i: Int) -> Element?
+	func index_slow(_ i: Int) -> Element?
 	{
 		return self[i]
 	}

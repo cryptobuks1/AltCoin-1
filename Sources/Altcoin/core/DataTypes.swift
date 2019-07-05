@@ -20,18 +20,18 @@ public typealias CurrencyId = String
 
 public struct Currency
 {
-	let id: CurrencyId
-	let name: String
-	let rank: Int
-	let tokens : [String]
-	let timeRange: TimeRange
+	public let id: CurrencyId
+	public let name: String
+	public let rank: Int
+	public let tokens : [String]
+	public let timeRange: TimeRange
 }
 
 public struct CurrencySet
 {
-	var currencies : [Currency]
+	public var currencies : [Currency]
 	
-	init (currencies: [Currency])
+	public init (currencies: [Currency])
 	{
 		self.currencies = currencies
 		assert(!currencies.hasDuplicates({ $0.id }))

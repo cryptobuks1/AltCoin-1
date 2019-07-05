@@ -12,7 +12,7 @@ func cacheAllCurrencies () throws
 	let usecond : Double = 1000000
 	let dataProvider = try DataProviderCaching (source: DataProviderWeb(), cache: DataProviderDiskJSON())
 
-	if var currencies = try dataProvider.getCurrencies()
+	if let currencies = try dataProvider.getCurrencies()
 	{
 //			let selected = ["bitcoin", "litecoin", "chainlink"]
 //			currencies = currencies.filter { return selected.contains($0.id) }

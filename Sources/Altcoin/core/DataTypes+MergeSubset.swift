@@ -209,7 +209,7 @@ extension HistoricalValues
 		var samples = lhsSamples + rhs.samples
 		samples.sort { return $0.time < $1.time }
 		
-		HistoricalValues.log.print { "merge_contiguous lhs.range(\(self.timeRange)) lhs.count(\(self.samples.count)) lhs.reduced(\(lhsSamples.count)) rhs.timeRange(\(rhs.timeRange)) rhs.samples(\(rhs.samples.count)))" }
+		HistoricalValues.log.print { "merge_contiguous lhs.range(\(String(describing: self.timeRange))) lhs.count(\(self.samples.count)) lhs.reduced(\(lhsSamples.count)) rhs.timeRange(\(String(describing: rhs.timeRange))) rhs.samples(\(rhs.samples.count)))" }
 		return HistoricalValues(samples: samples)
 	}
 
