@@ -20,3 +20,5 @@ This altcoin package provide 3 main functionalities:
 To generate the xcode packages, use
 swift package generate-xcodeproj
 
+To download a pre-populated-sqlite database:
+https://drive.google.com/open?id=1_ZU_fNRDFFBUMlD0KB9VmqxHpUorYyEi
