@@ -10,6 +10,7 @@ import Foundation
 public class DataProviderMemory : DataCache
 {
 	let log = Log(clazz: DataProviderMemory.self)
+	let logLock = LogNull(clazz: DataProviderMemory.self)
 	let lock = ReadWriteLock()
 	
 	var currencies : CurrencySet? = nil
@@ -26,6 +27,7 @@ public class DataProviderMemory : DataCache
 	{
 		if let l = lock.read({ return locks[currency.id] })
 		{
+			logLock.print { "using lock for \(currency.id)" }
 			return l
 		}
 		
@@ -37,6 +39,7 @@ public class DataProviderMemory : DataCache
 			
 			let lock = ReadWriteLock()
 			locks[currency.id] = lock
+			logLock.print { "creating lock for \(currency.id)" }
 			return lock
 		}
 	}
@@ -57,8 +60,8 @@ public class DataProviderMemory : DataCache
 
 	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
 	{
-		return lock.read {
-			return currencyDatas[currency.id]?[key]?.subset(range)
+		return lockFor(currency).read {
+			return lock.read { currencyDatas[currency.id]?[key]?.subset(range) }
 		}
 	}
 	
@@ -80,14 +83,14 @@ public class DataProviderMemory : DataCache
 	public func getCurrencyRanges(for currency: Currency, key: DataKey, in range: TimeRange) -> TimeRanges?
 	{
 		return lockFor(currency).read {
-			return currencyDatas[currency.id]?[key]?.ranges.intersection(range)
+			return lock.read { currencyDatas[currency.id]?[key]?.ranges.intersection(range) }
 		}
 	}
 
 	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution)
 	{
 		return lockFor(currency).write {
-			var keyedCurrencyDatas = self.currencyDatas[currency.id] ?? [DataKey:CurrencyData]()
+			var keyedCurrencyDatas = lock.read { self.currencyDatas[currency.id] ?? [DataKey:CurrencyData]() }
 			
 			for data in datas
 			{

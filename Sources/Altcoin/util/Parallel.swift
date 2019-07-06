@@ -122,6 +122,8 @@ public extension Array
 
 public class ReadWriteLock
 {
+	static let log = LogNull(clazz: ReadWriteLock.self)
+	
 	var l = pthread_rwlock_t()
 	
 	public init ()
@@ -135,33 +137,38 @@ public class ReadWriteLock
 	}
 	
 	public func read<T> (_ f: () throws -> T) throws -> T
-	{		
+	{
 		pthread_rwlock_rdlock(&l)
-		defer { pthread_rwlock_unlock(&l) }
+		ReadWriteLock.log.print { "r-lock-\(l){" };
+		
+		defer { ReadWriteLock.log.print { "}r-unlock-\(l)" }; pthread_rwlock_unlock(&l) }
 		
 		return try f()
+	}
+	
+	public func read<T> (_ f: () -> T) -> T
+	{
+		pthread_rwlock_rdlock(&l)
+		ReadWriteLock.log.print { "r-lock-\(l){" };
+		defer { ReadWriteLock.log.print { "}r-unlock-\(l)" }; pthread_rwlock_unlock(&l) }
+		
+		return f()
 	}
 
 	public func write<T> (_ f: () throws -> T) throws -> T
 	{
 		pthread_rwlock_wrlock(&l)
-		defer { pthread_rwlock_unlock(&l) }
+		ReadWriteLock.log.print { "w-lock-\(l){" };
+		defer { ReadWriteLock.log.print { "}w-unlock-\(l)" }; pthread_rwlock_unlock(&l) }
 		
 		return try f()
-	}
-
-	public func read<T> (_ f: () -> T) -> T
-	{
-		pthread_rwlock_rdlock(&l)
-		defer { pthread_rwlock_unlock(&l) }
-		
-		return f()
 	}
 
 	public func write<T> (_ f: () -> T) -> T
 	{
 		pthread_rwlock_wrlock(&l)
-		defer { pthread_rwlock_unlock(&l) }
+		ReadWriteLock.log.print { "w-lock-\(l){" };
+		defer { ReadWriteLock.log.print { "}w-unlock-\(l)" }; pthread_rwlock_unlock(&l) }
 		
 		return f()
 	}
