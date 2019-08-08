@@ -11,7 +11,7 @@ import sajson_swift
 
 public class DataProviderWeb : DataProvider
 {
-	let log = Log(clazz: DataProviderWeb.self)
+	let log = LogNull(clazz: DataProviderWeb.self)
 	let logDetail = LogNull(clazz: DataProviderWeb.self)
 
 	public typealias SourceTimeGenerator = () -> TimeInterval
@@ -87,8 +87,8 @@ public class DataProviderWeb : DataProvider
 					let rank = Int(any: coin[S_.rank]?.valueAsAny),
 					let tokens = coin[S_.tokens]?.valueAsAny as? [String],
 					let timeRange =
-						try? getCurrencyDataRange(for: slug) ??
-							getCurrencyDataRange(for: slug, useCache: false)
+						try? getCurrencyDataRange(for: slug)
+//							?? getCurrencyDataRange(for: slug, useCache: false)
 				{
 					return Currency(id: slug, name: name, rank: Int(rank), tokens: tokens, timeRange: timeRange)
 				}

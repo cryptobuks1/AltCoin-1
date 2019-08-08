@@ -29,7 +29,7 @@ if runDataCaching
 			let currency = $0
 
 			// read from the disk cache into memory cache
-			_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
+//			_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
 			
 			// read if necessary from the web to the memory cache
 			_ = try? cacheProviderWM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
@@ -38,7 +38,6 @@ if runDataCaching
 			try? memoryDataProvider.writeTo(diskDataProvider)
 		}
 	}
-	
 }
 
 let runSimulation = false

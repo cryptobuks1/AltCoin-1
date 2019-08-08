@@ -22,11 +22,6 @@ public class ProxyFinder
 
 	public init ()
 	{
-//		try? scan()
-		
-//		repeater = repeatWithInterval(60.0) {
-//			try? self.scan()
-//		}
 	}
 	
 	public func getRandomProxy () -> Proxy?
@@ -41,7 +36,6 @@ public class ProxyFinder
 		}
 
 		return proxy
-//		return proxies.randomElement()
 	}
 	
 	func clear ()
@@ -51,9 +45,6 @@ public class ProxyFinder
 	
 	func scan () throws
 	{
-//		objc_sync_enter(self)
-//    	defer { objc_sync_exit(self) }
-
 		proxies.removeAll()
 
 		let url = URL(string: urlStrings[urlStringIndex % urlStrings.count])

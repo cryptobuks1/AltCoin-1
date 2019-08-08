@@ -286,22 +286,28 @@ public class DataProviderBinary: DataCache
 	var db: Connection! = nil
 	let lock = ReadWriteLock()
 	
-	
-	
 	class S_ {
 		static let
 			folderName = "\(S.documents)/binary",
 			currenciesFileName = "currencies.binary"
 	}
 	
+	public init ()
+	{
+	}
+	
 	public func getByteBufferFor(fileName: String) -> ByteBuffer?
 	{
-		let data = try? Data(contentsOf: getDataFolderUrl()!.appendingPathComponent(fileName), options: .mappedRead)
-		return data?.withUnsafeBytes {
-			let bba = ByteBufferAllocator()
-			var buffer = bba.buffer(capacity: 0);
-			buffer.writeBytes($0)
-			return buffer
+		return autoreleasepool {
+			guard let dataFolder = getDataFolderUrl(fileName: fileName) else { return nil }
+
+			let data = try? Data(contentsOf: dataFolder.appendingPathComponent(fileName), options: .mappedRead)
+			return data?.withUnsafeBytes {
+				let bba = ByteBufferAllocator()
+				var buffer = bba.buffer(capacity: 0);
+				buffer.writeBytes($0)
+				return buffer
+			}
 		}
 	}
 
@@ -309,29 +315,26 @@ public class DataProviderBinary: DataCache
 	{
 		buffer.withUnsafeReadableBytes {
 			let data = Data($0)
-			try? data.write(to: getDataFolderUrl()!.appendingPathComponent(fileName), options: .atomicWrite)
+			if let dataFolder = getDataFolderUrl(fileName: fileName)
+			{
+				try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
+				try? data.write(to: dataFolder.appendingPathComponent(fileName), options: .atomicWrite)
+			}
 		}
 	}
 
-	public init() throws
-	{
-		if let dataFolder = getDataFolderUrl()
-		{
-			try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
-		}
-	}
-
-	func getDataFolderUrl () -> URL?
+	func getDataFolderUrl (fileName: String) -> URL?
 	{
 		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 		{
-			documentsURL.appendPathComponent(S_.folderName)
+			documentsURL.appendPathComponent(S_.folderName, isDirectory: true)
+			documentsURL.appendPathComponent(String(fileName.prefix(1)), isDirectory: true)
 			return documentsURL
 		}
 		
 		return nil
 	}
-	
+
 
 	public func getCurrencies () throws -> CurrencySet?
 	{

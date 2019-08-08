@@ -35,16 +35,15 @@ class WebCache
 		static let
 			folderName = "\(S.documents)/http"
 	}
-
-	init()
-	{
-		if let dataFolder = getDataFolderUrl()
-		{
-			try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
-		}
-	}
 	
-	func getDataFolderUrl () -> URL?
+	func obsolete_convertUrlToFileName (_ url : URL) -> String
+	{
+		let s = url.absoluteString
+		return s.replacingOccurrences(of: ":", with: "=").replacingOccurrences(of: "/", with: "#")
+	}
+
+
+	func obsolete_getDataFolderUrl () -> URL?
 	{
 		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 		{
@@ -55,31 +54,66 @@ class WebCache
 		return nil
 	}
 	
-	func getFileUrlFor(_ fileName: String) -> URL?
+	func transferObsoleteFile(_ url: URL)
 	{
-		if var dataFolderUrl = getDataFolderUrl()
+		objc_sync_enter(self)
+    	defer { objc_sync_exit(self) }
+	
+		let fileName = obsolete_convertUrlToFileName(url)
+		guard let folder = obsolete_getDataFolderUrl() else { return }
+		let oldFilePath = folder.path + "/" + fileName
+		let oldFileUrl = folder.appendingPathComponent(fileName)
+		guard FileManager.default.fileExists(atPath: oldFilePath) else { return }
+
+		guard let newFileUrl = getDataFileUrl(url) else { return }
+		try? FileManager.default.createDirectory(at: newFileUrl.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+		
+		do {
+			try FileManager.default.moveItem(at: oldFileUrl, to: newFileUrl)
+			print("transfered \(oldFileUrl) to \(newFileUrl)")
+		}
+		catch
 		{
-			dataFolderUrl.appendPathComponent(fileName)
-			return dataFolderUrl
+			print(error)
+		}
+	}
+
+	init()
+	{
+	}
+	
+	func getDataFileUrl (_ url: URL) -> URL?
+	{
+		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+		{
+			documentsURL.appendPathComponent(S_.folderName, isDirectory: true)
+			documentsURL.appendPathComponent(url.host!, isDirectory: true)
+			
+			var relativePath = url.relativePath.substring(from: 1)
+			let isDirectory = url.absoluteString.suffix(1) == "/"
+			isDirectory ? relativePath.append("/_") : nil
+			documentsURL.appendPathComponent(relativePath, isDirectory: false)
+			return documentsURL
 		}
 		
 		return nil
 	}
-
-	func convertUrlToFileName (_ url : URL) -> String
-	{
-		let s = url.absoluteString
-		return s.replacingOccurrences(of: ":", with: "=").replacingOccurrences(of: "/", with: "#")
-	}
 	
+
 	func getCacheFor (url: URL) -> JSON?
 	{
-		if let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+		transferObsoleteFile(url)
+		
+		if let fileUrl = getDataFileUrl(url)
 		{
-			if let data = try? Data(contentsOf: fileUrl),
-				let json = try? parse(allocationStrategy: .single, input: data)
-			{
-				return (data, json)
+			return autoreleasepool {
+				if let data = try? Data(contentsOf: fileUrl),
+					let json = try? parse(allocationStrategy: .single, input: data)
+				{
+					return (data, json)
+				}
+				
+				return nil
 			}
 		}
 		return nil
@@ -87,8 +121,10 @@ class WebCache
 	
 	func setCacheFor (url: URL, json: JSON?) throws
 	{
-		if let json = json, let fileUrl = getFileUrlFor(convertUrlToFileName(url))
+		if let json = json, let fileUrl = getDataFileUrl(url)
 		{
+			try? FileManager.default.createDirectory(at: fileUrl.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+
 			let data = json.0
 			try data.write(to: fileUrl, options: .atomic)
 		}
