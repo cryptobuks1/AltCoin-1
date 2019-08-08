@@ -85,12 +85,28 @@ extension Sequence
 		return nil
 	}
 
+#if NO_PARALLEL
+	public func forEach_parallel(_ f: (_ t: Element) ->()) {
+		self.forEach {
+			f($0)
+		}
+	}
+#else
 	public func forEach_parallel(_ f: (_ t: Element) ->()) {
 		DispatchQueue.concurrentPerform(iterations: self.count_slow) { (index) in
 			f(self.index_slow(index)!)
 		}
 	}
+#endif
 
+#if NO_PARALLEL
+	public func map_parallel<T>(_ f: (_ t: Element) -> T) -> [T] {
+		return self.map {
+			f($0)
+		}
+	}
+
+#else
 	public func map_parallel<T>(_ f: (_ t: Element) -> T) -> [T] {
 		var a = [T]()
 		let lock = NSLock()
@@ -105,6 +121,7 @@ extension Sequence
 		
 		return a
 	}
+#endif
 }
 
 public extension Array

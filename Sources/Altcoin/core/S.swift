@@ -8,13 +8,13 @@
 
 import Foundation
 
-class S
+public class S
 {
-	static let
+	public static let
 		documents = "altcoin-simulator",
 		priceUSD = "priceUSD",
 		priceBTC = "priceBTC",
 		volumeUSD = "volumeUSD",
-		markeyCapByAvailableSupply = "markeyCapByAvailableSupply"
+		marketCapByAvailableSupply = "marketCapByAvailableSupply"
 	
 }

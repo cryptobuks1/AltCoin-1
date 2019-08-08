@@ -11,8 +11,9 @@ import sajson_swift
 
 public class DataProviderWeb : DataProvider
 {
-	let log = LogNull(clazz: DataProviderWeb.self)
-	
+	let log = Log(clazz: DataProviderWeb.self)
+	let logDetail = LogNull(clazz: DataProviderWeb.self)
+
 	public typealias SourceTimeGenerator = () -> TimeInterval
 	let endSourceTime : SourceTimeGenerator
 
@@ -45,13 +46,13 @@ public class DataProviderWeb : DataProvider
 	}
 	
 	
-	public func getCurrencyDataRange(for id: String) throws -> TimeRange?
+	public func getCurrencyDataRange(for id: String, useCache: Bool = true) throws -> TimeRange?
 	{
 		let currencyDataRangeURLString = S_.currencyDataRangeURLStringTemplate
 			.replacingOccurrences(of: S_.templateId, with: id)
 		
 		let url = URL(string: currencyDataRangeURLString)!
-		let (json, error, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: url, useCache: true)
+		let (json, error, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: url, useCache: useCache)
 		guard error == nil else { throw error! }
 
 		if let json = json
@@ -85,13 +86,15 @@ public class DataProviderWeb : DataProvider
 					let name = coin[S_.name]?.valueAsAny as? String,
 					let rank = Int(any: coin[S_.rank]?.valueAsAny),
 					let tokens = coin[S_.tokens]?.valueAsAny as? [String],
-					let timeRange = try? getCurrencyDataRange(for: slug)
+					let timeRange =
+						try? getCurrencyDataRange(for: slug) ??
+							getCurrencyDataRange(for: slug, useCache: false)
 				{
 					return Currency(id: slug, name: name, rank: Int(rank), tokens: tokens, timeRange: timeRange)
 				}
 				else
 				{
-					log.error { "failed to deserialize coin \(coin)" }
+					log.error { "failed to deserialize coin \(coin.asDictionary())" }
 				}
 
 				
@@ -138,7 +141,7 @@ public class DataProviderWeb : DataProvider
 			}
 			
 			let values = HistoricalValues(samples: historicalValues)
-			log.print { "parsed historical values have median time span \(values.medianTimeBetweenSamples)" }
+			logDetail.print { "parsed historical values have median time span \(values.medianTimeBetweenSamples)" }
 			
 			return values
 		}
@@ -155,12 +158,13 @@ public class DataProviderWeb : DataProvider
 		let rangeSegments = Int(floor(range.lowerBound / segmentLength)) ..< Int(ceil(range.upperBound / segmentLength))
 		
 		var datas = [DataKey:CurrencyData]()
+		let lock = ReadWriteLock()
 
-		for rangeSegment in rangeSegments
-		{
+		rangeSegments.forEach_parallel {
+			(rangeSegment) in
 			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
 			let roundedRange = rangeSegmentTime.clamped(to: 0 ... endSourceTime() )
-			log.print { "getCurrencyDatas_ range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
+			log.print { "getCurrencyDatas_ \(currency.id) range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
 		
 			let currencyDataURLString = S_.currencyDataURLStringTemplate
 				.replacingOccurrences(of: S_.templateId, with: currency.id)
@@ -169,10 +173,10 @@ public class DataProviderWeb : DataProvider
 
 			let currencyDataURL = URL(string: currencyDataURLString)!
 			let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
-			guard error == nil else { throw error! }
+			guard error == nil else { return }
 		
 			let parseTos = [
-				(S.markeyCapByAvailableSupply, S_.market_cap_by_available_supply),
+				(S.marketCapByAvailableSupply, S_.market_cap_by_available_supply),
 				(S.priceBTC, S_.price_btc),
 				(S.priceUSD, S_.price_usd),
 				(S.volumeUSD, S_.volume_usd)
@@ -184,13 +188,15 @@ public class DataProviderWeb : DataProvider
 				{
 					if let values = parseHistoricalValues(json, parseTo.1)
 					{
-						let existingData = datas[parseTo.0] ??
-							CurrencyData(
-								key: parseTo.0,
-								ranges: TimeRanges(ranges:[]),
-								values: HistoricalValues(samples: []),
-								wasCached: false
-							)
+						let existingData = lock.read {
+							datas[parseTo.0] ??
+								CurrencyData(
+									key: parseTo.0,
+									ranges: TimeRanges(ranges:[]),
+									values: HistoricalValues(samples: []),
+									wasCached: false
+								)
+						}
 						
 						let newData =
 							CurrencyData(
@@ -202,7 +208,9 @@ public class DataProviderWeb : DataProvider
 						
 						let mergedData = existingData.merge(newData)
 						
-						datas[parseTo.0] = mergedData
+						lock.write {
+							datas[parseTo.0] = mergedData
+						}
 					}
 				}
 			}

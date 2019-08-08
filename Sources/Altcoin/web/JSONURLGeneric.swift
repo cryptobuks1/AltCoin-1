@@ -1,16 +1,31 @@
 //
-//  JSONURLTask.swift
-//  AltCoinSimulator
+//  JSONURLGeneric.swift
+//  AltCoin
 //
-//  Created by Timothy Prepscius on 6/15/19.
-//  Copyright © 2019 Timothy Prepscius. All rights reserved.
+//  Created by Timothy Prepscius on 8/7/19.
 //
 
 import Foundation
 import sajson_swift
 
-typealias JSON = (data: Data, doc: sajson_swift.Document)
-typealias JSONNode = sajson_swift.Value
+public typealias JSON = (data: Data, doc: sajson_swift.Document)
+public typealias JSONNode = sajson_swift.Value
+
+public protocol IOTask
+{
+	func resume ()
+}
+
+public protocol IOURLTask
+{
+	func dataTask (with url: URL, callback: @escaping (_ json:JSON?, _ error:Error?)->()) -> IOTask
+	func sessionManager () -> IOSessionManager
+}
+
+public protocol IOSessionManager
+{
+	func cycle () -> Bool
+}
 
 class WebCache
 {
@@ -80,108 +95,16 @@ class WebCache
 	}
 }
 
-extension URLSession {
 
-    func withProxy(proxyURL: String, proxyPort: Int) -> URLSession
-    {
-        let configuration = URLSessionConfiguration.ephemeral
-
-		configuration.connectionProxyDictionary = [
-			kCFNetworkProxiesHTTPEnable: true,
-			kCFNetworkProxiesHTTPProxy: proxyURL,
-			kCFNetworkProxiesHTTPPort: proxyPort,
-			kCFNetworkProxiesHTTPSEnable: true,
-			kCFNetworkProxiesHTTPSProxy: proxyURL,
-			kCFNetworkProxiesHTTPSPort: proxyPort
-		]
-		
-		configuration.timeoutIntervalForRequest = 3.0
-
-        return URLSession(configuration: configuration, delegate: self.delegate, delegateQueue: self.delegateQueue)
-    }
-}
-
-class JSONURLSessionManager
-{
-	typealias Proxy = (url: String, port: Int)
-
-	static var shared = ThreadShared<JSONURLSessionManager>({ return JSONURLSessionManager() })
-
-	let log = Log(clazz: JSONURLSessionManager.self)
-	var session : URLSession! = nil
-
-	init ()
-	{
-		_ = cycle()
-	}
-
-	func cycle () -> Bool
-	{
-		log.print { "cycling" }
-		
-		if let proxy = ProxyFinder.shared.getRandomProxy()
-		{
-			session = URLSession.shared.withProxy(proxyURL: proxy.url, proxyPort: proxy.port)
-			return true
-		}
-		
-		session = URLSession.shared;
-		return false
-	}
-	
-	func readFromDisk (fileName: String)
-	{
-		
-	}
-}
 
 class JSONURLTask
 {
-	let logCache = LogNull(clazz: JSONURLTask.self)
-	let log = Log(clazz: JSONURLTask.self)
-
-	enum URLResponseError : Error {
-		case statusCodeNot200
-	}
-
 	static let shared = JSONURLTask()
 	
-	func dataTask (with url: URL, callback: @escaping (_ json:JSON?, _ error:Error?)->()) -> URLSessionDataTask
-	{
-		let task = JSONURLSessionManager.shared.v.session.dataTask(with: url)
-		{
-			data, response, error in
-			
-			var transformedError : Error? = error
-			var transformedData : JSON? = nil
-
-			// check for a non 200
-			if error == nil
-			{
-				do
-				{
-					if let urlResponse = response as? HTTPURLResponse
-					{
-						if urlResponse.statusCode != 200
-						{
-							throw URLResponseError.statusCodeNot200
-						}
-					}
-			
-					let json = try parse(allocationStrategy: .single, input: data!)
-					transformedData = (data!, json)
-				}
-				catch
-				{
-					transformedError = error
-				}
-			}
-			
-			callback(transformedData, transformedError)
-		}
-		
-		return task;
-	}
+	let logCache = LogNull(clazz: JSONURLTask.self)
+	let log = Log(clazz: JSONURLTask.self)
+	
+	let worker : IOURLTask = JSONURLTaskFoundation()
 	
 	func dataTaskSync (with url: URL, useCache: Bool) -> (json: JSON?, error: Error?, wasCached: Bool)
 	{
@@ -194,7 +117,7 @@ class JSONURLTask
 		let sem = DispatchSemaphore(value: 0)
 		var result : (JSON?, Error?, Bool)! = nil
 		
-		let task = dataTask(with: url) {
+		let task = worker.dataTask(with: url) {
 			json, error in
 			
 			result = (json, error, false)
@@ -257,7 +180,7 @@ class JSONURLTask
 			{
 				print(error)
 
-				if !JSONURLSessionManager.shared.v.cycle()
+				if !worker.sessionManager().cycle()
 				{
 					log.print { "could not cycle, instead sleeping." }
 					log.print { "sleeping for \(sleepSeconds)" }
@@ -281,3 +204,4 @@ class JSONURLTask
 	}
 
 }
+

@@ -9,33 +9,69 @@
 import Foundation
 import AltCoin
 
-let webDataProvider = DataProviderWeb()
-let diskDataProvider = try DataProviderDiskSQLite()
-let memoryDataProvider = DataProviderMemory()
-let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
+let runDataCaching = true
+if runDataCaching
+{
+	let webDataProvider = DataProviderWeb()
+	let diskDataProvider = try DataProviderBinary()
 
-let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
-//let cacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
-//let cacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
+	if let currencies = try webDataProvider.getCurrencies()
+	{
+		try? diskDataProvider.putCurrencies(currencies)
+		let allTime = TimeRange(uncheckedBounds: (TimeEvents.firstBubbleStart, TimeEvents.august1st2019))
+		
+		currencies.currencies.forEach_parallel {
+			let memoryDataProvider = DataProviderMemory()
 
-let dataProvider = DataProviderCurrencyFilter(provider: cacheProvider, filter: { $0.rank < 5 })
-let timeProvider = TimeProviderStep(now: TimeEvents.roundDown(TimeEvents.firstBubbleStart, range: TimeQuantities.Week), stepEquation: StandardTimeEquations.nextDay)
+			let cacheProviderDM = DataProviderCaching (source: diskDataProvider, cache: memoryDataProvider)
+			let cacheProviderWM = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
-let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)
+			let currency = $0
 
-let timeRange = StandardTimeRanges.oneWeek
-let resolution = Resolution.day
-let tradeGenerator = TradeGeneratorVelocitiesMaximum(
-	relativeDataProvider: relativeDataProvider,
-	timeRange: timeRange,
-	resolution: resolution
-)
+			// read from the disk cache into memory cache
+			_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
+			
+			// read if necessary from the web to the memory cache
+			_ = try? cacheProviderWM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
+			
+			// write to disk
+			try? memoryDataProvider.writeTo(diskDataProvider)
+		}
+	}
+	
+}
 
-let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(trades: []))
+let runSimulation = false
+if runSimulation
+{
+	let webDataProvider = DataProviderWeb()
+	//let diskDataProvider = try DataProviderDiskSQLite()
+	let diskDataProvider = try DataProviderBinary()
+	let memoryDataProvider = DataProviderMemory()
+	//let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
+	//let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
 
-let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
+	//let cacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
+	let cacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
-try runner.run(until: TimeEvents.july1st2019)
+	let dataProvider = cacheProvider
+	//let dataProvider = DataProviderCurrencyFilter(provider: cacheProvider, filter: { $0.rank < 5 })
+	let timeProvider = TimeProviderStep(now: TimeEvents.roundDown(TimeEvents.firstBubbleStart, range: TimeQuantities.Week), stepEquation: StandardTimeEquations.nextDay)
 
-//try memoryDataProvider.writeTo(diskDataProvider)
+	let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)
+
+	let timeRange = StandardTimeRanges.oneWeek
+	let resolution = Resolution.day
+	let tradeGenerator = TradeGeneratorVelocitiesMaximum(
+		relativeDataProvider: relativeDataProvider,
+		timeRange: timeRange,
+		resolution: resolution
+	)
+
+	let simulator = Simulator(tradeGenerator: tradeGenerator, tradeBook: TradeBook(trades: []))
+
+	let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
+
+	try runner.run(until: TimeEvents.august1st2019)
+}
 

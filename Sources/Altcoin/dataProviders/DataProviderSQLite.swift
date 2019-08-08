@@ -233,18 +233,16 @@ public class DataProviderDiskSQLite: DataCache
 	
 	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-		return try lock.read {
-			if var currencyData = try getCurrencyData(for: currency, key: key, in: range, with: resolution)
+		if var currencyData = try getCurrencyData(for: currency, key: key, in: range, with: resolution)
+		{
+			currencyData.wasCached = true
+			if currencyData.ranges.contains(range)
 			{
-				currencyData.wasCached = true
-				if currencyData.ranges.contains(range)
-				{
-					return [currencyData]
-				}
+				return [currencyData]
 			}
-			
-			return nil
 		}
+		
+		return nil
 	}
 	
 	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws

@@ -117,19 +117,54 @@ public class DataProviderMemory : DataCache
 			{
 				try sink.putCurrencies(currencies)
 				log.print { "wrote currencies" }
+			}
+			
+			for currencyData in currencyDatas
+			{
+				let id = currencyData.key
+				let currency = Currency(id: id, name: "", rank: 0, tokens: [], timeRange: TimeRange(uncheckedBounds: (0,0)))
 				
+				let datas = currencyData.value
+
+				for (_, data) in datas
+				{
+					try sink.putCurrencyDatas([data], for: currency, in: data.enclosingTimeRange ?? TimeRange.Zero, with: .minute)
+					log.print { "wrote \(currency.id) \(data.key)" }
+				}
+			}
+		}
+	}
+
+	public func readFrom(_ provider: DataProvider) throws
+	{
+		return try lock.read {
+			self.currencies = try provider.getCurrencies()
+			log.print { "read currencies" }
+			
+			if let currencies = currencies
+			{
 				for currency in currencies.currencies
 				{
-					if let datas = currencyDatas[currency.id]
+					if let datas = try provider.getCurrencyDatas(for: currency, key: S.priceUSD, in: currency.timeRange, with: .minute)
 					{
-						for (_, data) in datas
+						for data in datas
 						{
-							try sink.putCurrencyDatas([data], for: currency, in: data.enclosingTimeRange ?? TimeRange.Zero, with: .minute)
-							log.print { "wrote \(currency.id) \(data.key)" }
+							if !currencyDatas.keys.contains(currency.id)
+							{
+								currencyDatas[currency.id] = [:]
+							}
+							
+							currencyDatas[currency.id]![data.key] = data
+							log.print { "read currency \(currency.id) \(data.key)" }
 						}
+					}
+					else
+					{
+						log.print { "failed to read \(currency.id)" }
 					}
 				}
 			}
 		}
 	}
+	
 }

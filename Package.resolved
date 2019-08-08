@@ -2,11 +2,11 @@
   "object": {
     "pins": [
       {
-        "package": "BSON",
-        "repositoryURL": "https://github.com/OpenKitten/BSON",
+        "package": "async-http-client",
+        "repositoryURL": "https://github.com/swift-server/async-http-client.git",
         "state": {
-          "branch": "master/6.0",
-          "revision": "602cfb3a0b9d002a21e46ae46911dddafcf92527",
+          "branch": "master",
+          "revision": "e64448e1eff26022040ca587c0e637a05e82aa7d",
           "version": null
         }
       },
@@ -42,17 +42,17 @@
         "repositoryURL": "https://github.com/apple/swift-nio.git",
         "state": {
           "branch": null,
-          "revision": "ba7970fe396e8198b84c6c1b44b38a1d4e2eb6bd",
-          "version": "1.14.1"
+          "revision": "b07efecaea7359054b8a85d357f05c8152b7716c",
+          "version": "2.6.0"
         }
       },
       {
-        "package": "swift-nio-zlib-support",
-        "repositoryURL": "https://github.com/apple/swift-nio-zlib-support.git",
+        "package": "swift-nio-ssl",
+        "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
         "state": {
           "branch": null,
-          "revision": "37760e9a52030bb9011972c5213c3350fa9d41fd",
-          "version": "1.0.0"
+          "revision": "16de4b45c7cbe9815f995dd1539e6b7c4f0980a5",
+          "version": "2.2.0"
         }
       },
       {
