@@ -15,6 +15,8 @@ public class S
 		priceUSD = "priceUSD",
 		priceBTC = "priceBTC",
 		volumeUSD = "volumeUSD",
-		marketCapByAvailableSupply = "marketCapByAvailableSupply"
+		marketCapByAvailableSupply = "marketCapByAvailableSupply",
+	
+		allKeys = [priceUSD, priceBTC, volumeUSD, marketCapByAvailableSupply]
 	
 }

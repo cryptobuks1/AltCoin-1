@@ -18,7 +18,6 @@ if runDataCaching
 	if let currencies = try webDataProvider.getCurrencies()
 	{
 		try? diskDataProvider.putCurrencies(currencies)
-		let allTime = TimeRange(uncheckedBounds: (TimeEvents.firstBubbleStart, TimeEvents.today12am))
 		
 		let currencyCount = currencies.currencies.count
 		currencies.currencies.enumerated().forEach_parallel {
@@ -38,7 +37,7 @@ if runDataCaching
 	//			_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
 				
 				// read if necessary from the web to the memory cache
-				_ = try? cacheProviderWM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
+				_ = try? cacheProviderWM.getCurrencyDatas(for: currency, key: S.priceUSD, in: currency.timeRange, with: .minute)
 				
 				// write to disk
 				try? memoryDataProvider.writeTo(diskDataProvider)
@@ -56,12 +55,12 @@ if runSimulation
 	
 	let webDataProvider = DataProviderWeb(useCacheForCurrencies: true)
 
-	//let diskDataProvider = try DataProviderDiskSQLite()
-	let diskDataProvider = DataProviderBinary(readOnly: true)
+	let diskDataProvider = try DataProviderDiskSQLite()
+	//let diskDataProvider = DataProviderBinary(readOnly: true)
 	let memoryDataProvider = DataProviderMemory()
 	
 	let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
-	let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
+	let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider, acquireEntireRangeAtOnce: true)
 
 
 	var dataProvider : DataProvider = cacheProvider

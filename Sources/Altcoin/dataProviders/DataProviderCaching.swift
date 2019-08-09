@@ -14,11 +14,13 @@ public class DataProviderCaching : DataProvider
 	
 	var source: DataProvider
 	var cache: DataCache
+	let acquireEntireRangeAtOnce : Bool
 	
-	public init (source: DataProvider, cache: DataCache)
+	public init (source: DataProvider, cache: DataCache, acquireEntireRangeAtOnce: Bool = false)
 	{
 		self.source = source
 		self.cache = cache
+		self.acquireEntireRangeAtOnce = acquireEntireRangeAtOnce
 	}
 	
 	public func getCurrencies () throws -> CurrencySet?
@@ -44,8 +46,9 @@ public class DataProviderCaching : DataProvider
 			return data
 		}
 		
-		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: range) ?? TimeRanges(ranges: [])
-		let requiredRanges = range.excluding(cachedTimeRanges)
+		let sourceRange = acquireEntireRangeAtOnce ? currency.timeRange : range
+		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: sourceRange) ?? TimeRanges(ranges: [])
+		let requiredRanges = sourceRange.excluding(cachedTimeRanges)
 		log.print { "range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)" }
 
 		for requiredRange in requiredRanges.ranges
@@ -71,9 +74,10 @@ public class DataProviderCaching : DataProvider
 			return datas
 		}
 		
-		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: range) ?? TimeRanges(ranges: [])
-		let requiredRanges = range.excluding(cachedTimeRanges)
-		log.print { "range \(range) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)" }
+		let sourceRange = acquireEntireRangeAtOnce ? currency.timeRange : range
+		let cachedTimeRanges = try cache.getCurrencyRanges(for: currency, key: key, in: sourceRange) ?? TimeRanges(ranges: [])
+		let requiredRanges = sourceRange.excluding(cachedTimeRanges)
+		log.print { "range \(range) -> sourceRange \(sourceRange) && cachedTimeRanges \(cachedTimeRanges) -> required ranges \(requiredRanges)" }
 
 		for requiredRange in requiredRanges.ranges
 		{
