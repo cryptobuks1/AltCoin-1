@@ -289,19 +289,17 @@ public class DataProviderBinary: DataCache
 	class S_ {
 		static let
 			folderName = "\(S.documents)/binary",
-			currenciesFileName = "currencies.binary"
+			currenciesFileName = "currencies"
 	}
 	
 	public init ()
 	{
 	}
 	
-	public func getByteBufferFor(fileName: String) -> ByteBuffer?
+	public func getByteBufferFor(url: URL) -> ByteBuffer?
 	{
 		return autoreleasepool {
-			guard let dataFolder = getDataFolderUrl(fileName: fileName) else { return nil }
-
-			let data = try? Data(contentsOf: dataFolder.appendingPathComponent(fileName), options: .mappedRead)
+			let data = try? Data(contentsOf: url, options: .mappedRead)
 			return data?.withUnsafeBytes {
 				let bba = ByteBufferAllocator()
 				var buffer = bba.buffer(capacity: 0);
@@ -311,43 +309,29 @@ public class DataProviderBinary: DataCache
 		}
 	}
 
-	public func putByteBufferFor(_ buffer: ByteBuffer, fileName: String)
+	public func putByteBufferFor(_ buffer: ByteBuffer, url: URL)
 	{
 		buffer.withUnsafeReadableBytes {
 			let data = Data($0)
-			if let dataFolder = getDataFolderUrl(fileName: fileName)
-			{
-				try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
-				try? data.write(to: dataFolder.appendingPathComponent(fileName), options: .atomicWrite)
-			}
+			try? FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+			try? data.write(to: url, options: .atomicWrite)
 		}
 	}
-
-	func getDataFolderUrl (fileName: String) -> URL?
-	{
-		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-		{
-			documentsURL.appendPathComponent(S_.folderName, isDirectory: true)
-			documentsURL.appendPathComponent(String(fileName.prefix(1)), isDirectory: true)
-			return documentsURL
-		}
-		
-		return nil
-	}
-
 
 	public func getCurrencies () throws -> CurrencySet?
 	{
 		return lock.read {
-			var b = getByteBufferFor(fileName: S_.currenciesFileName)
+			guard let url = getFileUrl(for: S_.currenciesFileName, key: "index") else { return nil }
+			var b = getByteBufferFor(url: url)
 			return b?.readCurrencySet()
 		}
 	}
 
 	public func putCurrencies (_ data: CurrencySet) throws
 	{
-		return try lock.write {
-			putByteBufferFor(data.toByteBuffer(), fileName: S_.currenciesFileName)
+		return lock.write {
+			guard let url = getFileUrl(for: S_.currenciesFileName, key: "index") else { return }
+			putByteBufferFor(data.toByteBuffer(), url: url)
 		}
 	}
 
@@ -358,14 +342,23 @@ public class DataProviderBinary: DataCache
 		}
 	}
 	
-	public func getCurrencyFileName (for currency: Currency, key: DataKey) -> String
+	public func getFileUrl (for id: String, key: DataKey) -> URL?
 	{
-		return "\(currency.id).\(key)"
+		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+		{
+			documentsURL.appendPathComponent(S_.folderName, isDirectory: true)
+			documentsURL.appendPathComponent(id, isDirectory: true)
+			documentsURL.appendPathComponent(key, isDirectory: false)
+			return documentsURL
+		}
+		
+		return nil
 	}
 	
 	public func getCurrencyData_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
-		var b = getByteBufferFor(fileName: getCurrencyFileName(for: currency, key: key))
+		guard let url = getFileUrl(for: currency.id, key: key) else { return nil }
+		var b = getByteBufferFor(url: url)
 		return b?.readCurrencyData()
 	}
 	
@@ -389,7 +382,8 @@ public class DataProviderBinary: DataCache
 	{
 		return lock.write {
 			for data in datas {
-				putByteBufferFor(data.toByteBuffer(), fileName: getCurrencyFileName(for: currency, key: data.key))
+				guard let url = getFileUrl(for: currency.id, key: data.key) else { return }
+				putByteBufferFor(data.toByteBuffer(), url: url)
 			}
 		}
 	}
