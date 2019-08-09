@@ -31,6 +31,7 @@ public class StandardTimeRanges
 	public static let relativeNow : Time = 0
 	public static let oneDay : TimeRange = -TimeQuantities.Day ... relativeNow
 	public static let oneWeek : TimeRange = -TimeQuantities.Week ... relativeNow
+	public static let twoWeeks : TimeRange = (2.0 * -TimeQuantities.Week) ... relativeNow
 	public static let fourWeeks : TimeRange = (4.0 * -TimeQuantities.Week) ... relativeNow
 }
 

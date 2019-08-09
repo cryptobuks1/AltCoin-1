@@ -14,6 +14,8 @@ public protocol TimeProvider
 
 public class TimeProviderStep : TimeProvider
 {
+	let log = Log(clazz: TimeProviderStep.self)
+	
 	var now_ : Time
 	let stepEquation : Equation_P1_R1;
 	
@@ -21,6 +23,8 @@ public class TimeProviderStep : TimeProvider
 	{
 		self.now_ = now
 		self.stepEquation = stepEquation
+		
+		log.print { "TimeProviderStep \(now)" }
 	}
 	
 	public var now: Time {

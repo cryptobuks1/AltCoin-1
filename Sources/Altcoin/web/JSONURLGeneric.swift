@@ -147,7 +147,7 @@ class JSONURLTask
 	let logCache = LogNull(clazz: JSONURLTask.self)
 	let log = Log(clazz: JSONURLTask.self)
 	
-	let worker : IOURLTask = JSONURLTaskNIO()
+	let worker : IOURLTask = JSONURLTaskFoundation()
 	
 	func dataTaskSync (with url: URL, useCache: Bool) -> (json: JSON?, error: Error?, wasCached: Bool)
 	{

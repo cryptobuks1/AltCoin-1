@@ -9,7 +9,7 @@
 import Foundation
 import AltCoin
 
-let runDataCaching = true
+let runDataCaching = CommandLine.arguments.contains("--cache")
 if runDataCaching
 {
 	let webDataProvider = DataProviderWeb()
@@ -18,7 +18,7 @@ if runDataCaching
 	if let currencies = try webDataProvider.getCurrencies()
 	{
 		try? diskDataProvider.putCurrencies(currencies)
-		let allTime = TimeRange(uncheckedBounds: (TimeEvents.firstBubbleStart, TimeEvents.august1st2019))
+		let allTime = TimeRange(uncheckedBounds: (TimeEvents.firstBubbleStart, TimeEvents.today12am))
 		
 		let currencyCount = currencies.currencies.count
 		currencies.currencies.enumerated().forEach_parallel {
@@ -49,28 +49,28 @@ if runDataCaching
 	print("finished caching currencies to binary store")
 }
 
-let runSimulation = false
+let runSimulation =  CommandLine.arguments.contains("--simulate")
 if runSimulation
 {
 	print("beginning simulation")
 	
-	let webDataProvider = DataProviderWeb()
+	let webDataProvider = DataProviderWeb(useCacheForCurrencies: true)
+
 	//let diskDataProvider = try DataProviderDiskSQLite()
-	let diskDataProvider = try DataProviderBinary()
+	let diskDataProvider = DataProviderBinary(readOnly: true)
 	let memoryDataProvider = DataProviderMemory()
-	//let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
-	//let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
+	
+	let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
+	let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider)
 
-	//let cacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
-	let cacheProvider = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
-	let dataProvider = cacheProvider
-	//let dataProvider = DataProviderCurrencyFilter(provider: cacheProvider, filter: { $0.rank < 5 })
-	let timeProvider = TimeProviderStep(now: TimeEvents.roundDown(TimeEvents.firstBubbleStart, range: TimeQuantities.Week), stepEquation: StandardTimeEquations.nextDay)
-
-	let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)
+	var dataProvider : DataProvider = cacheProvider
+	//dataProvider = DataProviderCurrencyFilter(provider: dataProvider, filter: { $0.rank < 5 })
 
 	let timeRange = StandardTimeRanges.oneWeek
+	let timeProvider = TimeProviderStep(now: TimeEvents.firstBubbleStart - timeRange.lowerBound, stepEquation: StandardTimeEquations.nextDay)
+	let relativeDataProvider = RelativeDataProviderConcrete(dataProvider: dataProvider, timeProvider: timeProvider)
+
 	let resolution = Resolution.day
 	let tradeGenerator = TradeGeneratorVelocitiesMaximum(
 		relativeDataProvider: relativeDataProvider,
@@ -82,6 +82,6 @@ if runSimulation
 
 	let runner = SimulatorRunner(simulator: simulator, timeProvider: timeProvider)
 
-	try runner.run(until: TimeEvents.august1st2019)
+	try runner.run(until: TimeEvents.today12am)
 }
 

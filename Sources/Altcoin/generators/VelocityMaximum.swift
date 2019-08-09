@@ -47,7 +47,7 @@ public class TradeGeneratorVelocitiesMaximum : TradeGeneratorWithDataProviderAnd
 		
 		var idToVelocity : [IdToVelocity] = idToVelocityQ.compactMap { return $0 }
 		idToVelocity.sort { return $0.velocity > $1.velocity }
-		idToVelocity.forEach { iv in log.print { "\(iv.id): \(iv.velocity)" } }
+		idToVelocity.enumerated().filter { $0.0 < 10 }.forEach { (i,iv) in log.print { "\(iv.id): \(iv.velocity)" } }
 		
 		return trades
 	}

@@ -61,7 +61,10 @@ public class DataProviderMemory : DataCache
 	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) -> CurrencyData?
 	{
 		return lockFor(currency).read {
-			return lock.read { currencyDatas[currency.id]?[key]?.subset(range) }
+			return lock.read {
+				guard let c = currencyDatas[currency.id]?[key] else { return nil }
+				return c.subset(range)
+			}
 		}
 	}
 	

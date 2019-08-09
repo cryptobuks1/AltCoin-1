@@ -282,9 +282,11 @@ extension CurrencyData
 
 public class DataProviderBinary: DataCache
 {
-	let log = Log(clazz: DataProviderDiskSQLite.self)
+	let log = Log(clazz: DataProviderBinary.self)
 	var db: Connection! = nil
 	let lock = ReadWriteLock()
+	
+	let readOnly : Bool
 	
 	class S_ {
 		static let
@@ -292,8 +294,9 @@ public class DataProviderBinary: DataCache
 			currenciesFileName = "currencies"
 	}
 	
-	public init ()
+	public init (readOnly: Bool = false)
 	{
+		self.readOnly = readOnly
 	}
 	
 	public func getByteBufferFor(url: URL) -> ByteBuffer?
@@ -329,6 +332,8 @@ public class DataProviderBinary: DataCache
 
 	public func putCurrencies (_ data: CurrencySet) throws
 	{
+		guard !readOnly else { return }
+
 		return lock.write {
 			guard let url = getFileUrl(for: S_.currenciesFileName, key: "index") else { return }
 			putByteBufferFor(data.toByteBuffer(), url: url)
@@ -354,7 +359,27 @@ public class DataProviderBinary: DataCache
 		
 		return nil
 	}
+
+	public func getCurrencyDataSubRange_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
+	{
+		guard let url = getFileUrl(for: currency.id, key: key) else { return nil }
+		var b = getByteBufferFor(url: url)
+		return b?.readCurrencyData()
+	}
 	
+	public func getCurrencyDataSubRanges (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [TimeRange]
+	{
+		let segmentLength = TimeQuantities.Week
+		let rangeSegments = Int(floor(range.lowerBound / segmentLength)) ..< Int(ceil(range.upperBound / segmentLength))
+
+		return rangeSegments.map {
+			(rangeSegment) in
+
+			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
+			return rangeSegmentTime
+		}
+	}
+
 	public func getCurrencyData_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
 	{
 		guard let url = getFileUrl(for: currency.id, key: key) else { return nil }
@@ -369,6 +394,7 @@ public class DataProviderBinary: DataCache
 	
 	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
+		log.print { "DataProviderBinary.getCurrencyDatas \(currency.id)" }
 		if var currencyData = try getCurrencyData(for: currency, key: key, in: range, with: resolution)
 		{
 			currencyData.wasCached = true
@@ -380,6 +406,9 @@ public class DataProviderBinary: DataCache
 	
 	public func putCurrencyDatas(_ datas: [CurrencyData], for currency: Currency, in range: TimeRange, with resolution: Resolution) throws
 	{
+		guard !readOnly else { return }
+		
+		log.print { "DataProviderBinary.putCurrencyDatas \(currency.id)" }
 		return lock.write {
 			for data in datas {
 				guard let url = getFileUrl(for: currency.id, key: data.key) else { return }

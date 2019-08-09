@@ -16,6 +16,7 @@ public class DataProviderWeb : DataProvider
 
 	public typealias SourceTimeGenerator = () -> TimeInterval
 	let endSourceTime : SourceTimeGenerator
+	let useCacheForCurrencies : Bool
 
 	class S_ {
 		static let
@@ -40,9 +41,10 @@ public class DataProviderWeb : DataProvider
 
 	
 
-	public init (endSourceTime: @escaping SourceTimeGenerator = { TimeEvents.today12am } )
+	public init (useCacheForCurrencies: Bool = false, endSourceTime: @escaping SourceTimeGenerator = { TimeEvents.today12am } )
 	{
 		self.endSourceTime = endSourceTime
+		self.useCacheForCurrencies = useCacheForCurrencies
 	}
 	
 	
@@ -73,7 +75,7 @@ public class DataProviderWeb : DataProvider
 	public func getCurrencies () throws -> CurrencySet?
 	{
 		let currenciesURL = URL(string: S_.currenciesURLString)!
-		let (json, _, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currenciesURL, useCache: false)
+		let (json, _, _) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currenciesURL, useCache: useCacheForCurrencies)
 
 		return json?.doc.withRootValueReader { coins_ -> CurrencySet? in
 			guard case .array(let coins) = coins_ else { return nil }
@@ -88,6 +90,8 @@ public class DataProviderWeb : DataProvider
 					let tokens = coin[S_.tokens]?.valueAsAny as? [String],
 					let timeRange =
 						try? getCurrencyDataRange(for: slug)
+						// if the currency doesn't have any range, it may have been added but not populated, in this case
+						// we try again
 //							?? getCurrencyDataRange(for: slug, useCache: false)
 				{
 					return Currency(id: slug, name: name, rank: Int(rank), tokens: tokens, timeRange: timeRange)
@@ -149,80 +153,84 @@ public class DataProviderWeb : DataProvider
 
 	public func getCurrencyDatas (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
 	{
-		return autoreleasepool {
-
-			if !currency.timeRange.extends(range)
-			{
-				return []
-			}
+		return try autoreleasepool {
+			return try getCurrencyDatas_(for: currency, key: key, in: range, with: resolution)
+		}
+	}
+	
+	public func getCurrencyDatas_ (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> [CurrencyData]?
+	{
+		if !currency.timeRange.extends(range)
+		{
+			return []
+		}
+	
+		let segmentLength = TimeQuantities.Week
+		let rangeSegments = Int(floor(range.lowerBound / segmentLength)) ..< Int(ceil(range.upperBound / segmentLength))
 		
-			let segmentLength = TimeQuantities.Week
-			let rangeSegments = Int(floor(range.lowerBound / segmentLength)) ..< Int(ceil(range.upperBound / segmentLength))
-			
-			var datas = [DataKey:CurrencyData]()
-			let lock = ReadWriteLock()
+		var datas = [DataKey:CurrencyData]()
+		let lock = ReadWriteLock()
 
-			rangeSegments.forEach_parallel {
-				(rangeSegment) in
-				let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
-				let roundedRange = rangeSegmentTime.clamped(to: 0 ... endSourceTime() )
-				log.print { "getCurrencyDatas_ \(currency.id) range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
-			
-				let currencyDataURLString = S_.currencyDataURLStringTemplate
-					.replacingOccurrences(of: S_.templateId, with: currency.id)
-					.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
-					.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
+		rangeSegments.forEach_parallel {
+			(rangeSegment) in
+			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
+			let roundedRange = rangeSegmentTime.clamped(to: 0 ... endSourceTime() )
+			log.print { "getCurrencyDatas_ \(currency.id) range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
+		
+			let currencyDataURLString = S_.currencyDataURLStringTemplate
+				.replacingOccurrences(of: S_.templateId, with: currency.id)
+				.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
+				.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
 
-				let currencyDataURL = URL(string: currencyDataURLString)!
-				let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
-				guard error == nil else { return }
+			let currencyDataURL = URL(string: currencyDataURLString)!
+			let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
+			guard error == nil else { return }
+		
+			let parseTos = [
+				(S.marketCapByAvailableSupply, S_.market_cap_by_available_supply),
+				(S.priceBTC, S_.price_btc),
+				(S.priceUSD, S_.price_usd),
+				(S.volumeUSD, S_.volume_usd)
+			]
 			
-				let parseTos = [
-					(S.marketCapByAvailableSupply, S_.market_cap_by_available_supply),
-					(S.priceBTC, S_.price_btc),
-					(S.priceUSD, S_.price_usd),
-					(S.volumeUSD, S_.volume_usd)
-				]
-				
-				if let json = json
+			if let json = json
+			{
+				for parseTo in parseTos
 				{
-					for parseTo in parseTos
+					if let values = parseHistoricalValues(json, parseTo.1)
 					{
-						if let values = parseHistoricalValues(json, parseTo.1)
-						{
-							let existingData = lock.read {
-								datas[parseTo.0] ??
-									CurrencyData(
-										key: parseTo.0,
-										ranges: TimeRanges(ranges:[]),
-										values: HistoricalValues(samples: []),
-										wasCached: false
-									)
-							}
-							
-							let newData =
+						let existingData = lock.read {
+							datas[parseTo.0] ??
 								CurrencyData(
 									key: parseTo.0,
-									ranges: TimeRanges(ranges:[roundedRange]),
-									values: values,
-									wasCached: wasCached
+									ranges: TimeRanges(ranges:[]),
+									values: HistoricalValues(samples: []),
+									wasCached: false
 								)
-							
-							let mergedData = existingData.merge(newData)
-							
-							lock.write {
-								datas[parseTo.0] = mergedData
-							}
+						}
+						
+						let newData =
+							CurrencyData(
+								key: parseTo.0,
+								ranges: TimeRanges(ranges:[roundedRange]),
+								values: values,
+								wasCached: wasCached
+							)
+						
+						let mergedData = existingData.merge(newData)
+						
+						lock.write {
+							datas[parseTo.0] = mergedData
 						}
 					}
 				}
 			}
-			
-			log.print { "read web for \(currency.id)" }
-			guard !datas.isEmpty else { return nil }
-			return datas.map({ return $0.value })
-			
 		}
+		
+		log.print { "read web for \(currency.id)" }
+		guard !datas.isEmpty else { return nil }
+		return datas.map({ return $0.value })
+		
 	}
 	
 	public func getCurrencyData (for currency: Currency, key: DataKey, in range: TimeRange, with resolution: Resolution) throws -> CurrencyData?
