@@ -27,6 +27,9 @@ public protocol IOSessionManager
 	func cycle () -> Bool
 }
 
+let timeOutConnect = 3
+let timeoutResource = 6
+
 class WebCache
 {
 	static let instance = WebCache()
@@ -144,7 +147,7 @@ class JSONURLTask
 	let logCache = LogNull(clazz: JSONURLTask.self)
 	let log = Log(clazz: JSONURLTask.self)
 	
-	let worker : IOURLTask = JSONURLTaskFoundation()
+	let worker : IOURLTask = JSONURLTaskNIO()
 	
 	func dataTaskSync (with url: URL, useCache: Bool) -> (json: JSON?, error: Error?, wasCached: Bool)
 	{

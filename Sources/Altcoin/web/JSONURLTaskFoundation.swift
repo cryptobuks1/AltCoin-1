@@ -26,7 +26,8 @@ extension URLSession {
 			kCFNetworkProxiesHTTPSPort: proxyPort
 		]
 		
-		configuration.timeoutIntervalForRequest = 3.0
+		configuration.timeoutIntervalForRequest = Double(timeOutConnect)
+		configuration.timeoutIntervalForResource = Double(timeoutResource)
 
         return URLSession(configuration: configuration, delegate: self.delegate, delegateQueue: self.delegateQueue)
     }

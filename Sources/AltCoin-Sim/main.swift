@@ -20,8 +20,12 @@ if runDataCaching
 		try? diskDataProvider.putCurrencies(currencies)
 		let allTime = TimeRange(uncheckedBounds: (TimeEvents.firstBubbleStart, TimeEvents.august1st2019))
 		
-		currencies.currencies.forEach_parallel {
-			let currency = $0
+		let currencyCount = currencies.currencies.count
+		currencies.currencies.enumerated().forEach_parallel {
+			let index = $0.0
+			let currency = $0.1
+		
+			print("acquiring currency \(currency.id) \(index)/\(currencyCount)")
 		
 			autoreleasepool {
 				let memoryDataProvider = DataProviderMemory()
@@ -41,11 +45,15 @@ if runDataCaching
 			}
 		}
 	}
+	
+	print("finished caching currencies to binary store")
 }
 
 let runSimulation = false
 if runSimulation
 {
+	print("beginning simulation")
+	
 	let webDataProvider = DataProviderWeb()
 	//let diskDataProvider = try DataProviderDiskSQLite()
 	let diskDataProvider = try DataProviderBinary()

@@ -29,12 +29,12 @@ public class ProxyFinder
 		objc_sync_enter(self)
     	defer { objc_sync_exit(self) }
 
-		let proxy = proxies.popLast()
 		if proxies.isEmpty
 		{
 			try? scan()
 		}
 
+		let proxy = proxies.popLast()
 		return proxy
 	}
 	
@@ -47,30 +47,45 @@ public class ProxyFinder
 	{
 		proxies.removeAll()
 
-		let url = URL(string: urlStrings[urlStringIndex % urlStrings.count])
+		let url = URL(string: urlStrings[urlStringIndex % urlStrings.count])!
 		urlStringIndex += 1
 		
-		let html = try String(contentsOf: url!, encoding: .utf8)
-		let doc: Document = try SwiftSoup.parse(html)
-		let trs = try doc.select("tbody > tr")
-		
-		for (i, tr) in trs.array().enumerated()
-		{
-			if i > 100
-			{
-				break
-			}
+		let sem = DispatchSemaphore(value: 0)
+
+		let task = URLSession.shared.dataTask(with: url) {
+			data, response, error in
 			
-			if let tds = try? tr.select("td").array(),
-				let ip = try? tds[0].text(),
-				let port = try? tds[1].text(),
-				let p = Int(port)
+			if let data = data
 			{
-				print("scan found \(ip):\(p)")
-				proxies.append((ip, p))
+				if let html = String(data: data, encoding: .utf8),
+					let doc: Document = try? SwiftSoup.parse(html),
+					let trs = try? doc.select("tbody > tr")
+				{
+					for (i, tr) in trs.array().enumerated()
+					{
+						if i > 100
+						{
+							break
+						}
+						
+						if let tds = try? tr.select("td").array(),
+							let ip = try? tds[0].text(),
+							let port = try? tds[1].text(),
+							let p = Int(port)
+						{
+							print("scan found \(ip):\(p)")
+							self.proxies.append((ip, p))
+						}
+					}
+				}
+				
+				sem.signal();
 			}
 		}
 		
+		task.resume()
+		sem.wait()
+
 		proxies = proxies.reversed()
 		
 	}

@@ -38,7 +38,7 @@ class JSONURLSessionManagerNIO : IOSessionManager
 		
 		if let proxy = ProxyFinder.shared.getRandomProxy()
 		{
-			session = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(certificateVerification: .noHostnameVerification, followRedirects: true, timeout: HTTPClient.Timeout(connect: .seconds(1), read: .seconds(2)), proxy: .server(host: proxy.url, port: proxy.port)))
+			session = HTTPClient(eventLoopGroupProvider: .createNew, configuration: .init(certificateVerification: .noHostnameVerification, followRedirects: true, timeout: HTTPClient.Timeout(connect: .seconds(TimeAmount.Value(timeOutConnect)), read: .seconds(TimeAmount.Value(timeoutResource))), proxy: .server(host: proxy.url, port: proxy.port)))
 			return true
 		}
 		
