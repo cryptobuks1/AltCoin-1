@@ -36,14 +36,14 @@ class WebCache
 			folderName = "\(S.documents)/http"
 	}
 	
-	func obsolete_convertUrlToFileName (_ url : URL) -> String
+	private func obsolete_convertUrlToFileName (_ url : URL) -> String
 	{
 		let s = url.absoluteString
 		return s.replacingOccurrences(of: ":", with: "=").replacingOccurrences(of: "/", with: "#")
 	}
 
 
-	func obsolete_getDataFolderUrl () -> URL?
+	private func obsolete_getDataFolderUrl () -> URL?
 	{
 		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 		{
@@ -54,10 +54,12 @@ class WebCache
 		return nil
 	}
 	
-	func transferObsoleteFile(_ url: URL)
+	private func transferObsoleteFile(_ url: URL)
 	{
 		objc_sync_enter(self)
     	defer { objc_sync_exit(self) }
+	
+	
 	
 		let fileName = obsolete_convertUrlToFileName(url)
 		guard let folder = obsolete_getDataFolderUrl() else { return }
@@ -82,7 +84,7 @@ class WebCache
 	{
 	}
 	
-	func getDataFileUrl (_ url: URL) -> URL?
+	private func getDataFileUrl (_ url: URL) -> URL?
 	{
 		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
 		{
@@ -102,11 +104,11 @@ class WebCache
 
 	func getCacheFor (url: URL) -> JSON?
 	{
-		transferObsoleteFile(url)
-		
-		if let fileUrl = getDataFileUrl(url)
-		{
-			return autoreleasepool {
+		return autoreleasepool {
+			transferObsoleteFile(url)
+			
+			if let fileUrl = getDataFileUrl(url)
+			{
 				if let data = try? Data(contentsOf: fileUrl),
 					let json = try? parse(allocationStrategy: .single, input: data)
 				{
@@ -115,18 +117,20 @@ class WebCache
 				
 				return nil
 			}
+			return nil
 		}
-		return nil
 	}
 	
 	func setCacheFor (url: URL, json: JSON?) throws
 	{
-		if let json = json, let fileUrl = getDataFileUrl(url)
-		{
-			try? FileManager.default.createDirectory(at: fileUrl.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+		try autoreleasepool {
+			if let json = json, let fileUrl = getDataFileUrl(url)
+			{
+				try? FileManager.default.createDirectory(at: fileUrl.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
 
-			let data = json.0
-			try data.write(to: fileUrl, options: .atomic)
+				let data = json.0
+				try data.write(to: fileUrl, options: .atomic)
+			}
 		}
 	}
 }

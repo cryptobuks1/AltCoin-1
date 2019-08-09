@@ -79,39 +79,41 @@ class JSONURLTaskFoundation : IOURLTask
 
 	public func dataTask (with url: URL, callback: @escaping (_ json:JSON?, _ error:Error?)->()) -> IOTask
 	{
-		let task = JSONURLSessionManagerFoundation.shared.v.session.dataTask(with: url)
-		{
-			data, response, error in
-			
-			var transformedError : Error? = error
-			var transformedData : JSON? = nil
-
-			// check for a non 200
-			if error == nil
+		return autoreleasepool {
+			let task = JSONURLSessionManagerFoundation.shared.v.session.dataTask(with: url)
 			{
-				do
+				data, response, error in
+				
+				var transformedError : Error? = error
+				var transformedData : JSON? = nil
+
+				// check for a non 200
+				if error == nil
 				{
-					if let urlResponse = response as? HTTPURLResponse
+					do
 					{
-						if urlResponse.statusCode != 200
+						if let urlResponse = response as? HTTPURLResponse
 						{
-							throw URLResponseError.statusCodeNot200
+							if urlResponse.statusCode != 200
+							{
+								throw URLResponseError.statusCodeNot200
+							}
 						}
+				
+						let json = try parse(allocationStrategy: .single, input: data!)
+						transformedData = (data!, json)
 					}
-			
-					let json = try parse(allocationStrategy: .single, input: data!)
-					transformedData = (data!, json)
+					catch
+					{
+						transformedError = error
+					}
 				}
-				catch
-				{
-					transformedError = error
-				}
+				
+				callback(transformedData, transformedError)
 			}
 			
-			callback(transformedData, transformedError)
+			return task;
 		}
-		
-		return task;
 	}
 }
 

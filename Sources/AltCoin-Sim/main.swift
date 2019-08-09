@@ -21,21 +21,24 @@ if runDataCaching
 		let allTime = TimeRange(uncheckedBounds: (TimeEvents.firstBubbleStart, TimeEvents.august1st2019))
 		
 		currencies.currencies.forEach_parallel {
-			let memoryDataProvider = DataProviderMemory()
-
-			let cacheProviderDM = DataProviderCaching (source: diskDataProvider, cache: memoryDataProvider)
-			let cacheProviderWM = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
-
 			let currency = $0
+		
+			autoreleasepool {
+				let memoryDataProvider = DataProviderMemory()
 
-			// read from the disk cache into memory cache
-//			_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
-			
-			// read if necessary from the web to the memory cache
-			_ = try? cacheProviderWM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
-			
-			// write to disk
-			try? memoryDataProvider.writeTo(diskDataProvider)
+				let cacheProviderDM = DataProviderCaching (source: diskDataProvider, cache: memoryDataProvider)
+				let cacheProviderWM = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
+
+
+				// read from the disk cache into memory cache
+	//			_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
+				
+				// read if necessary from the web to the memory cache
+				_ = try? cacheProviderWM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
+				
+				// write to disk
+				try? memoryDataProvider.writeTo(diskDataProvider)
+			}
 		}
 	}
 }
