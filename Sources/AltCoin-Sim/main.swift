@@ -8,6 +8,20 @@
 
 import Foundation
 import AltCoin
+import PerfectCURL
+
+let runBase = CommandLine.arguments.contains("--base")
+if runBase
+{
+	if let url = URL(string: "https://drive.google.com/uc?export=download&id=1_ZU_fNRDFFBUMlD0KB9VmqxHpUorYyEi"),
+		let dataFileUrl = DataProviderDiskSQLite.dataFileUrl()
+	{
+		if downloadFromGoogleDrive (url, destination: dataFileUrl)
+		{
+			shell("gunzip", "-f", dataFileUrl.relativePath)
+		}
+	}
+}
 
 let runDataCaching = CommandLine.arguments.contains("--cache")
 if runDataCaching

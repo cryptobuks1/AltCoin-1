@@ -84,14 +84,25 @@ public class DataProviderDiskSQLite: DataCache
 		static let value = Expression<Real>("value")
 	}
 
+	static public func dataFileUrl () -> URL?
+	{
+		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
+		{
+			documentsURL.appendPathComponent(S_.folderName, isDirectory: true)
+			documentsURL.appendPathComponent(S_.currenciesFileName, isDirectory: false)
+			return documentsURL
+		}
+	
+		return nil
+	}
 
 	public init() throws
 	{
-		if let dataFolder = getDataFolderUrl()
+		if let dataFileUrl = DataProviderDiskSQLite.dataFileUrl()
 		{
-			try? FileManager.default.createDirectory(at: dataFolder, withIntermediateDirectories: true, attributes: nil)
-			db = try Connection(dataFolder.appendingPathComponent(S_.currenciesFileName).relativePath)
-			
+			try? FileManager.default.createDirectory(at: dataFileUrl.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+			db = try Connection(dataFileUrl.relativePath)
+
 			if !tableExists(db, Currencies_.table)
 			{
 				let _ = try db.run(Currencies_.table.create { t in
@@ -113,18 +124,6 @@ public class DataProviderDiskSQLite: DataCache
 
 		}
 	}
-
-	func getDataFolderUrl () -> URL?
-	{
-		if var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first
-		{
-			documentsURL.appendPathComponent(S_.folderName)
-			return documentsURL
-		}
-		
-		return nil
-	}
-	
 
 	public func getCurrencies () throws -> CurrencySet?
 	{

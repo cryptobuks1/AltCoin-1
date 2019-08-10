@@ -11,7 +11,7 @@ import sajson_swift
 
 public class DataProviderWeb : DataProvider
 {
-	let log = Log(clazz: DataProviderWeb.self)
+	let log = LogNull(clazz: DataProviderWeb.self)
 	let logDetail = LogNull(clazz: DataProviderWeb.self)
 
 	public typealias SourceTimeGenerator = () -> TimeInterval
