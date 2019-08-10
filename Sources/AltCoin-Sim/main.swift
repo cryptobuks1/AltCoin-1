@@ -18,7 +18,7 @@ if runBase
 	{
 		if downloadFromGoogleDrive (url, destination: dataFileUrl)
 		{
-			shell("gunzip", "-f", dataFileUrl.relativePath)
+			shell("gunzip", "-f", dataFileUrl.appendingPathExtension("gz").relativePath)
 		}
 	}
 }
