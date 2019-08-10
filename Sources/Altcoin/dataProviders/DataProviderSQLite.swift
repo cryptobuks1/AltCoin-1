@@ -34,6 +34,29 @@ public class DataProviderDiskSQLite: DataCache
 			currenciesFileName = "currencies.sqlite3"
 	}
 	
+	public static func download () -> Bool
+	{
+		// the tester
+		// let url = URL(string: "https://drive.google.com/uc?export=download&id=1ikckU8czQH1auVjbIMWncddBXXGs2E_w")!
+		// let expectRedirect = false
+		
+		// the real
+		let url = URL(string: "https://drive.google.com/uc?export=download&id=1_ZU_fNRDFFBUMlD0KB9VmqxHpUorYyEi")!
+		let expectRedirect = true
+
+		if let dataFileUrl = DataProviderDiskSQLite.dataFileUrl()
+		{
+			let destination = dataFileUrl.appendingPathExtension("gz")
+			if downloadFromGoogleDrive (url, destination: destination, expectRedirect: expectRedirect)
+			{
+				return shell("gunzip", "-f", destination.relativePath) == 0
+			}
+		}
+		
+		return false
+	}
+	
+	
 	func tableExists (_ db: Connection, _ table: Table) -> Bool
 	{
 		do

@@ -282,6 +282,28 @@ extension CurrencyData
 
 public class DataProviderBinary: DataCache
 {
+	public class func download () -> Bool
+	{
+		// the tester
+		// let url = URL(string: "https://drive.google.com/uc?export=download&id=1ikckU8czQH1auVjbIMWncddBXXGs2E_w")!
+		// let expectRedirect = false
+		
+		// the real
+		let url = URL(string: "https://drive.google.com/uc?export=download&id=1_ZU_fNRDFFBUMlD0KB9VmqxHpUorYyEi")!
+		let expectRedirect = true
+
+		guard var documentsURL = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else { return false }
+		documentsURL.appendPathComponent(S_.folderName, isDirectory: true)
+		let dataFileUrl = documentsURL.appendingPathComponent("AltCoin-binary.tar.gz")
+
+		if downloadFromGoogleDrive (url, destination: dataFileUrl, expectRedirect: expectRedirect)
+		{
+			return shell("tar", "xf", dataFileUrl.relativePath, "-C", documentsURL.relativePath, "--strip-components=1") == 0
+		}
+		
+		return false
+	}
+
 	let log = Log(clazz: DataProviderBinary.self)
 	var db: Connection! = nil
 	let lock = ReadWriteLock()

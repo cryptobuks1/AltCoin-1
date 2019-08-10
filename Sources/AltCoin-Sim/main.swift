@@ -10,33 +10,18 @@ import Foundation
 import AltCoin
 import PerfectCURL
 
-let runBase = CommandLine.arguments.contains("--base")
+let runBase = CommandLine.arguments.contains("--download")
 if runBase
 {
-	// the tester
-	// let url = URL(string: "https://drive.google.com/uc?export=download&id=1ikckU8czQH1auVjbIMWncddBXXGs2E_w")!
-	// let expectRedirect = false
-	
-	// the real
-	let url = URL(string: "https://drive.google.com/uc?export=download&id=1_ZU_fNRDFFBUMlD0KB9VmqxHpUorYyEi")!
-	let expectRedirect = true
-
-	if let dataFileUrl = DataProviderDiskSQLite.dataFileUrl()
-	{
-		let destination = dataFileUrl.appendingPathExtension("gz")
-		if downloadFromGoogleDrive (url, destination: destination, expectRedirect: expectRedirect)
-		{
-			shell("gunzip", "-f", destination.relativePath)
-		}
-	}
+	DataProviderBinary.download()
 }
 
-let runDataCaching = CommandLine.arguments.contains("--cache")
+let runDataCaching = CommandLine.arguments.contains("--update")
 if runDataCaching
 {
-	let webDataProvider = DataProviderWeb(useCacheForCurrencies: false)
-//	let diskDataProvider = try DataProviderBinary()
-	let diskDataProvider = try DataProviderDiskSQLite()
+	let webDataProvider = DataProviderWeb(useCacheForCurrencies: true)
+	let diskDataProvider = try DataProviderBinary()
+//	let diskDataProvider = try DataProviderDiskSQLite()
 
 	if let currencies = try webDataProvider.getCurrencies()
 	{
@@ -77,13 +62,12 @@ if runSimulation
 	
 	let webDataProvider = DataProviderWeb(useCacheForCurrencies: true)
 
-	let diskDataProvider = try DataProviderDiskSQLite()
-	//let diskDataProvider = DataProviderBinary(readOnly: true)
+//	let diskDataProvider = try DataProviderDiskSQLite()
+	let diskDataProvider = DataProviderBinary(readOnly: true)
 	let memoryDataProvider = DataProviderMemory()
 	
 	let diskCacheProvider = DataProviderCaching (source: webDataProvider, cache: diskDataProvider)
 	let cacheProvider = DataProviderCaching (source: diskCacheProvider, cache: memoryDataProvider, acquireEntireRangeAtOnce: true)
-
 
 	var dataProvider : DataProvider = cacheProvider
 	//dataProvider = DataProviderCurrencyFilter(provider: dataProvider, filter: { $0.rank < 5 })
