@@ -10,7 +10,7 @@ import SwiftSoup
 import PerfectCURL
 
 // google- they are the kmart of the internet- and .... "KMart sucks"
-public func downloadFromGoogleDrive(_ url: URL, destination: URL) -> Bool
+public func downloadFromGoogleDrive(_ url: URL, destination: URL, expectRedirect : Bool = true) -> Bool
 {
 	var succeeded = false
 
@@ -81,35 +81,38 @@ public func downloadFromGoogleDrive(_ url: URL, destination: URL) -> Bool
 	
 	print("Finished downloading google drive block html \(delegate.destination?.absoluteString ?? "error")")
 
-	if let file = delegate.destination,
-		let html = try? String(contentsOf: file, encoding: .utf8),
-		let doc: Document = try? SwiftSoup.parse(html),
-		let link = try? doc.getElementById("uc-download-link")?.attr("href"),
-		let url = URL(string: link, relativeTo: url)
+	if expectRedirect
 	{
-		print(url.absoluteString)
+		if let file = delegate.destination,
+			let html = try? String(contentsOf: file, encoding: .utf8),
+			let doc: Document = try? SwiftSoup.parse(html),
+			let link = try? doc.getElementById("uc-download-link")?.attr("href"),
+			let url = URL(string: link, relativeTo: url)
+		{
+			print(url.absoluteString)
 
-		print("Starting download")
-		let task = session.downloadTask(with: url)
-		delegate.logging = true
-		delegate.wait(for: task)
+			print("Starting download")
+			let task = session.downloadTask(with: url)
+			delegate.logging = true
+			delegate.wait(for: task)
+		}
+	}
 	
-		do
-		{
-			if let error = delegate.error {
-				throw error
-			}
-			if let location = delegate.destination {
-				try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
-				try FileManager.default.moveItem(at: location, to: destination.appendingPathExtension("gz"))
-				
-				succeeded = true
-			}
+	do
+	{
+		if let error = delegate.error {
+			throw error
 		}
-		catch
-		{
-			print(error)
+		if let location = delegate.destination {
+			try? FileManager.default.createDirectory(at: destination.deletingLastPathComponent(), withIntermediateDirectories: true, attributes: nil)
+			try FileManager.default.moveItem(at: location, to: destination)
+			
+			succeeded = true
 		}
+	}
+	catch
+	{
+		print(error)
 	}
 
 	return succeeded

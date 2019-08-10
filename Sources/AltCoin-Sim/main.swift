@@ -13,12 +13,20 @@ import PerfectCURL
 let runBase = CommandLine.arguments.contains("--base")
 if runBase
 {
-	if let url = URL(string: "https://drive.google.com/uc?export=download&id=1_ZU_fNRDFFBUMlD0KB9VmqxHpUorYyEi"),
-		let dataFileUrl = DataProviderDiskSQLite.dataFileUrl()
+	// the tester
+	// let url = URL(string: "https://drive.google.com/uc?export=download&id=1ikckU8czQH1auVjbIMWncddBXXGs2E_w")!
+	// let expectRedirect = false
+	
+	// the real
+	let url = URL(string: "https://drive.google.com/uc?export=download&id=1_ZU_fNRDFFBUMlD0KB9VmqxHpUorYyEi")!
+	let expectRedirect = true
+
+	if let dataFileUrl = DataProviderDiskSQLite.dataFileUrl()
 	{
-		if downloadFromGoogleDrive (url, destination: dataFileUrl)
+		let destination = dataFileUrl.appendingPathExtension("gz")
+		if downloadFromGoogleDrive (url, destination: destination, expectRedirect: expectRedirect)
 		{
-			shell("gunzip", "-f", dataFileUrl.appendingPathExtension("gz").relativePath)
+			shell("gunzip", "-f", destination.relativePath)
 		}
 	}
 }
@@ -27,7 +35,8 @@ let runDataCaching = CommandLine.arguments.contains("--cache")
 if runDataCaching
 {
 	let webDataProvider = DataProviderWeb(useCacheForCurrencies: false)
-	let diskDataProvider = try DataProviderBinary()
+//	let diskDataProvider = try DataProviderBinary()
+	let diskDataProvider = try DataProviderDiskSQLite()
 
 	if let currencies = try webDataProvider.getCurrencies()
 	{
@@ -46,9 +55,8 @@ if runDataCaching
 				let cacheProviderDM = DataProviderCaching (source: diskDataProvider, cache: memoryDataProvider)
 				let cacheProviderWM = DataProviderCaching (source: webDataProvider, cache: memoryDataProvider)
 
-
 				// read from the disk cache into memory cache
-	//			_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: allTime, with: .minute)
+				_ = try? cacheProviderDM.getCurrencyDatas(for: currency, key: S.priceUSD, in: currency.timeRange, with: .minute)
 				
 				// read if necessary from the web to the memory cache
 				_ = try? cacheProviderWM.getCurrencyDatas(for: currency, key: S.priceUSD, in: currency.timeRange, with: .minute)
