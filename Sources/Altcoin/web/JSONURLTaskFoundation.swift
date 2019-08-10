@@ -69,10 +69,6 @@ extension URLSessionDataTask : IOTask
 
 class JSONURLTaskFoundation : IOURLTask
 {
-	enum URLResponseError : Error {
-		case statusCodeNot200
-	}
-
 	public func sessionManager () -> IOSessionManager
 	{
 		return JSONURLSessionManagerFoundation.shared.v

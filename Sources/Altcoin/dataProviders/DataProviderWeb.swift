@@ -11,7 +11,7 @@ import sajson_swift
 
 public class DataProviderWeb : DataProvider
 {
-	let log = LogNull(clazz: DataProviderWeb.self)
+	let log = Log(clazz: DataProviderWeb.self)
 	let logDetail = LogNull(clazz: DataProviderWeb.self)
 
 	public typealias SourceTimeGenerator = () -> TimeInterval
@@ -166,7 +166,9 @@ public class DataProviderWeb : DataProvider
 		}
 	
 		let segmentLength = TimeQuantities.Week
-		let rangeSegments = Int(floor(range.lowerBound / segmentLength)) ..< Int(ceil(range.upperBound / segmentLength))
+		let roundedRange = range.clamped(to: 0 ... endSourceTime() )
+		log.print { "getCurrencyDatas_ \(currency.id) range \(TimeEvents.toString(range)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
+		let rangeSegments = Int(floor(roundedRange.lowerBound / segmentLength)) ..< Int(ceil(roundedRange.upperBound / segmentLength))
 		
 		var datas = [DataKey:CurrencyData]()
 		let lock = ReadWriteLock()
@@ -174,13 +176,14 @@ public class DataProviderWeb : DataProvider
 		rangeSegments.forEach_parallel {
 			(rangeSegment) in
 			let rangeSegmentTime = Double(rangeSegment) * segmentLength ... Double(rangeSegment + 1) * segmentLength
-			let roundedRange = rangeSegmentTime.clamped(to: 0 ... endSourceTime() )
-			log.print { "getCurrencyDatas_ \(currency.id) range \(TimeEvents.toString(rangeSegmentTime)) -> roundedRange \(TimeEvents.toString(roundedRange))" }
+			let clampedRangeSegmentTime = rangeSegmentTime.clamped(to: 0 ... endSourceTime())
+
+			log.print { "getCurrencyDatas_ \(currency.id) range \(TimeEvents.toString(rangeSegmentTime)) -> clamped \(TimeEvents.toString(clampedRangeSegmentTime))" }
 		
 			let currencyDataURLString = S_.currencyDataURLStringTemplate
 				.replacingOccurrences(of: S_.templateId, with: currency.id)
-				.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(roundedRange.lowerBound))")
-				.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(roundedRange.upperBound))")
+				.replacingOccurrences(of: S_.templateStartTime, with: "\(TimeEvents.toUnix(clampedRangeSegmentTime.lowerBound))")
+				.replacingOccurrences(of: S_.templateEndTime, with: "\(TimeEvents.toUnix(clampedRangeSegmentTime.upperBound))")
 
 			let currencyDataURL = URL(string: currencyDataURLString)!
 			let (json, error, wasCached) = JSONURLTask.shared.dataTaskSyncRateLimitRetry(with: currencyDataURL, useCache: true)
@@ -212,7 +215,7 @@ public class DataProviderWeb : DataProvider
 						let newData =
 							CurrencyData(
 								key: parseTo.0,
-								ranges: TimeRanges(ranges:[roundedRange]),
+								ranges: TimeRanges(ranges:[clampedRangeSegmentTime]),
 								values: values,
 								wasCached: wasCached
 							)

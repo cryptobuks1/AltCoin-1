@@ -12,7 +12,7 @@ import AltCoin
 let runDataCaching = CommandLine.arguments.contains("--cache")
 if runDataCaching
 {
-	let webDataProvider = DataProviderWeb()
+	let webDataProvider = DataProviderWeb(useCacheForCurrencies: false)
 	let diskDataProvider = try DataProviderBinary()
 
 	if let currencies = try webDataProvider.getCurrencies()

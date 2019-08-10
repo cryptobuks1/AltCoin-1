@@ -27,6 +27,11 @@ public protocol IOSessionManager
 	func cycle () -> Bool
 }
 
+enum URLResponseError : Error {
+	case statusCodeNot200
+}
+
+
 let timeOutConnect = 3
 let timeoutResource = 6
 
@@ -147,7 +152,7 @@ class JSONURLTask
 	let logCache = LogNull(clazz: JSONURLTask.self)
 	let log = Log(clazz: JSONURLTask.self)
 	
-	let worker : IOURLTask = JSONURLTaskFoundation()
+	let worker : IOURLTask = JSONURLTaskCURL()
 	
 	func dataTaskSync (with url: URL, useCache: Bool) -> (json: JSON?, error: Error?, wasCached: Bool)
 	{

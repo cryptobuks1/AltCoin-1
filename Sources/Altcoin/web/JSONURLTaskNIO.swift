@@ -66,10 +66,6 @@ class JSONURLTaskNIO : IOURLTask
 	let logCache = LogNull(clazz: JSONURLTask.self)
 	let log = Log(clazz: JSONURLTask.self)
 
-	enum URLResponseError : Error {
-		case statusCodeNot200
-	}
-
 	public func sessionManager () -> IOSessionManager
 	{
 		return JSONURLSessionManagerNIO.shared.v
