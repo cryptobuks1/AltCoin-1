@@ -20,7 +20,7 @@ let runDataCaching = CommandLine.arguments.contains("--update")
 if runDataCaching
 {
 	let webDataProvider = DataProviderWeb(useCacheForCurrencies: true)
-	let diskDataProvider = try DataProviderBinary()
+	let diskDataProvider = DataProviderBinary()
 //	let diskDataProvider = try DataProviderDiskSQLite()
 
 	if let currencies = try webDataProvider.getCurrencies()
